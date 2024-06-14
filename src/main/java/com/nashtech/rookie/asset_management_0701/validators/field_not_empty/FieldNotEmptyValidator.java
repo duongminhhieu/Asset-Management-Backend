@@ -1,4 +1,4 @@
-package com.nashtech.rookie.asset_management_0701.validators.FieldNotEmpty;
+package com.nashtech.rookie.asset_management_0701.validators.field_not_empty;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

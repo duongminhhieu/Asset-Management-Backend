@@ -1,4 +1,4 @@
-package com.nashtech.rookie.asset_management_0701.validators.FieldNotEmpty;
+package com.nashtech.rookie.asset_management_0701.validators.field_not_null;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -11,8 +11,8 @@ import static java.lang.annotation.ElementType.FIELD;
 
 @Target({FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = FieldNotEmptyValidator.class)
-public @interface FieldNotEmptyConstraint {
+@Constraint(validatedBy = FieldNotNullValidator.class)
+public @interface FieldNotNullConstraint {
     String message();
     String field() ;
     Class<?>[] groups() default {};
