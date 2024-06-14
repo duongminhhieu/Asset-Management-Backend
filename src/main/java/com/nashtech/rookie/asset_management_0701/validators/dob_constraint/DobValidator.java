@@ -1,4 +1,4 @@
-package com.nashtech.rookie.asset_management_0701.validators.DobConstraint;
+package com.nashtech.rookie.asset_management_0701.validators.dob_constraint;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

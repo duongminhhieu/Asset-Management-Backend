@@ -2,27 +2,31 @@
 spring:
   application:
     name: asset-management-0701
-  servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
-  jpa:
-    open-in-view: false
+
   datasource:
     url: jdbc:postgresql://ep-crimson-bread-a19wmur8.ap-southeast-1.aws.neon.tech/Ecomerce?user=Ecomerce_owner&password=q6vP0GkKDWxp&sslmode=require
     username: postgres
     password: 123456
     driver-class-name: org.postgresql.Driver
-    jpa:
-      hibernate:
-        ddl-auto: update
-      show-sql: false
-      properties:
-        hibernate:
-          format_sql: true
-      database: postgresql
-      database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+    path: /api-docs
 
 application:
   jwt:
@@ -35,10 +39,3 @@ application:
     default:
       username: admin@local.com
       password: test1234
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-  api-docs:
-    enabled: true
-    path: /api-docs
