@@ -1,0 +1,613 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd"
+        >
+<!--
+     Rules are described here: http://checkstyle.sourceforge.net/availablechecks.html
+-->
+
+<module name = "Checker">
+    <property name="charset" value="UTF-8"/>
+
+    <!-- ============================== -->
+    <!-- ANNOTATIONS                    -->
+    <!-- ============================== -->
+
+    <module name="SuppressWarningsFilter"/>
+
+    <!-- ============================== -->
+    <!-- JAVADOC COMMENTS               -->
+    <!-- ============================== -->
+
+    <!-- DISABLED: No enforcement regarding package-info.java (or package.html) files. -->
+    <!--<module name="JavadocPackage"/>-->
+
+
+    <!-- ============================== -->
+    <!-- MISCELLANEOUS                  -->
+    <!-- ============================== -->
+
+    <module name="NewlineAtEndOfFile"/>
+    <module name="Translation"/>
+
+    <module name="UniqueProperties">
+        <property name="fileExtensions" value="properties"/>
+    </module>
+
+
+    <!-- ============================== -->
+    <!-- REGEXP                         -->
+    <!-- ============================== -->
+
+    <!--  Check for spaces at end of lines  -->
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+    </module>
+
+    <!--  Check for instances of "@author"  -->
+    <module name="RegexpSingleline">
+        <property name="format" value="@[aA]uthor"/>
+    </module>
+
+    <!--  Check for instances of "Created by"  -->
+    <module name="RegexpSingleline">
+        <property name="format" value="[cC]reated\s+by"/>
+    </module>
+
+    <!--<module name="RegexpMultiline"/>-->
+    <!--<module name="RegexpSinglelineJava"/>-->
+
+
+    <!-- ============================== -->
+    <!-- SIZE VIOLATIONS                -->
+    <!-- ============================== -->
+
+    <module name="FileLength">
+        <property name="max"            value="2048"/>
+        <property name="fileExtensions" value="java"/>
+        <!--<property name="severity" value="warning"/>-->
+        <!--<property name="severity" value="error"/>-->
+    </module>
+
+
+
+
+    <!-- ============================== -->
+    <!-- WHITESPACES                    -->
+    <!-- ============================== -->
+
+    <module name="FileTabCharacter"/>
+
+    <module name="LineLength">
+        <!--        <property name="fileExtensions" value="java"/>-->
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
+
+    <module name="TreeWalker">
+        <!-- ============================== -->
+        <!-- ANNOTATIONS                    -->
+        <!-- ============================== -->
+
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="AnnotationLocation">-->
+        <!--<property name="allowSamelineMultipleAnnotations"           value="false"/>-->
+        <!--<property name="allowSamelineSingleParameterlessAnnotation" value="false"/>-->
+        <!--<property name="allowSamelineParametrizedAnnotation"        value="false"/>-->
+        <!--</module>-->
+
+        <module name="AnnotationUseStyle"/>
+        <module name="MissingDeprecated"/>
+        <module name="MissingOverride"/>
+        <module name="PackageAnnotation"/>
+        <module name="SuppressWarnings"/>
+        <module name="SuppressWarningsHolder"/>
+
+
+        <!-- ============================== -->
+        <!-- BLOCK CHECKS                   -->
+        <!-- ============================== -->
+
+        <!-- DISABLED: Nested blocks are allowed as they can help with readability, and with scoping variables. -->
+        <!--<module name="AvoidNestedBlocks">-->
+        <!--<property name="allowInSwitchCase" value="true"/>-->
+        <!--</module>-->
+
+        <module name="EmptyBlock"/>
+        <module name="LeftCurly"/>
+        <module name="NeedBraces"/>
+
+        <module name="RightCurly">
+            <property name="option" value="alone"/>
+            <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE,
+            CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR,
+            LITERAL_WHILE, LITERAL_DO, STATIC_INIT, INSTANCE_INIT"/>
+        </module>
+
+
+        <!-- ============================== -->
+        <!-- CLASS DESIGN                   -->
+        <!-- ============================== -->
+
+        <!-- DISABLED: Coding paradigm not enforced here. -->
+        <!--<module name="DesignForExtension"/>-->
+
+        <module name="FinalClass"/>
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InnerTypeLast"/>
+        <module name="InterfaceIsType"/>
+        <module name="MutableException"/>
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="OneTopLevelClass"/>-->
+
+        <module name="ThrowsCount">
+            <property name="max" value="8"/>
+        </module>
+
+        <!-- DISABLED: Final public fields are allowed. -->
+        <!--<module name="VisibilityModifier">-->
+        <!--<property name="packageAllowed"   value="true"/>-->
+        <!--<property name="protectedAllowed" value="true"/>-->
+        <!--</module>-->
+
+
+        <!-- ============================== -->
+        <!-- CODING                         -->
+        <!-- ============================== -->
+
+        <!-- DISABLED: Arrays without the trailing comma are allowed. -->
+        <!--<module name="ArrayTrailingComma"/>-->
+
+        <!-- DISABLED: Inline conditionals are allowed. -->
+        <!--<module name="AvoidInlineConditionals"/>-->
+
+        <module name="CovariantEquals"/>
+
+        <!-- DISABLED: This module gets confused with static methods and static blocks. -->
+        <module name="DeclarationOrder">
+            <property name="severity" value="warning"/>
+            <!--<property name="ignoreConstructors" value="true"/>-->
+        </module>
+
+        <module name="DefaultComesLast"/>
+        <module name="EmptyStatement"/>
+
+        <!-- DISABLED: This pattern hides/delays potential NPEs, code should fail right away. -->
+        <!--<module name="EqualsAvoidNull"/>-->
+
+        <module name="EqualsHashCode"/>
+
+        <module name="ExplicitInitialization"/>
+
+        <module name="FallThrough"/>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="FinalLocalVariable"/>-->
+
+        <module name="HiddenField">
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter"               value="true"/>
+            <property name="setterCanReturnItsClass"    value="true"/>
+        </module>
+
+        <module name="IllegalCatch"/>
+
+        <module name="IllegalInstantiation">
+            <property name="classes" value="java.lang.Boolean"/>
+        </module>
+
+        <!-- DISABLED: Anything is allowed. -->
+        <!--<module name="IllegalToken"/>-->
+
+        <!-- Forbid leading zeros in an integer literal, other than zero and a hex literal. -->
+        <module name="IllegalTokenText">
+            <property name="tokens"     value="NUM_INT,NUM_LONG"/>
+            <property name="format"     value="^0[^lx]"/>
+            <property name="ignoreCase" value="true"/>
+        </module>
+
+        <module name="IllegalThrows"/>
+
+        <module name="IllegalType">
+            <property name="tokens" value="PARAMETER_DEF, METHOD_DEF"/>
+        </module>
+
+        <module name="InnerAssignment"/>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="MagicNumber"/>-->
+
+        <!--<module name="MissingCtor"/>-->
+        <module name="MissingSwitchDefault"/>
+        <module name="ModifiedControlVariable"/>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="MultipleStringLiterals"/>-->
+
+        <module name="MultipleVariableDeclarations"/>
+
+        <module name="NestedIfDepth">
+            <property name="max" value="4"/>
+        </module>
+
+        <module name="NestedForDepth">
+            <property name="max" value="4"/>
+        </module>
+
+        <module name="NestedTryDepth">
+            <property name="max" value="4"/>
+        </module>
+
+        <module name="NoClone"/>
+        <module name="NoFinalizer"/>
+        <module name="OneStatementPerLine"/>
+
+        <!-- DISABLED: Too many false positives (public vs protected methods). -->
+        <!--<module name="OverloadMethodsDeclarationOrder"/>-->
+
+        <module name="PackageDeclaration"/>
+
+        <!-- DISABLED: Parameter assignment can yield leaner - and/or easier to read - code. -->
+        <!--<module name="ParameterAssignment"/>-->
+
+        <module name="RequireThis"/>
+
+        <module name="ReturnCount">
+            <property name="max"        value="8"/>
+            <property name="maxForVoid" value="8"/>
+        </module>
+
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <module name="StringLiteralEquality"/>
+        <module name="SuperClone"/>
+        <module name="SuperFinalize"/>
+        <module name="UnnecessaryParentheses"/>
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="VariableDeclarationUsageDistance">-->
+        <!--<property name="allowedDistance" value="1"/>-->
+        <!--</module>-->
+
+
+        <!-- ============================== -->
+        <!-- IMPORTS                        -->
+        <!-- ============================== -->
+
+        <module name="AvoidStarImport">
+            <property name="allowClassImports"        value="false"/>
+            <property name="allowStaticMemberImports" value="false"/>
+        </module>
+
+        <!--  http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6391197  -->
+        <module name="AvoidStaticImport">
+            <property name="excludes" value="org.junit.Assert.*,org.hamcrest.Matchers.*"/>
+        </module>
+
+        <module name="CustomImportOrder">
+            <property name="customImportOrderRules"           value="STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS###THIRD_PARTY_PACKAGE"/>
+            <property name="separateLineBetweenGroups"        value="true"/>
+            <property name="sortImportsInGroupAlphabetically" value="true"/>
+            <property name="specialImportsRegExp"             value="org"/>
+            <property name="standardPackageRegExp"            value="^(java|javax)\."/>
+        </module>
+
+        <module name="IllegalImport"/>
+        <module name="RedundantImport"/>
+
+        <module name="UnusedImports">
+            <property name="processJavadoc" value="false"/>
+        </module>
+
+        <!-- DISABLED: No restrictions on which classes can not be imported, any class is allowed. -->
+        <!--<module name="ImportControl"/>-->
+
+        <!-- REPLACED by CustomImportOrder -->
+        <!--<module name="ImportOrder">-->
+        <!--<property name="groups"        value="/^javax?\./,org"/>-->
+        <!--<property name="ordered"       value="true"/>-->
+        <!--<property name="separated"     value="true"/>-->
+        <!--<property name="option"        value="above"/>-->
+        <!--<property name="caseSensitive" value="true"/>-->
+        <!--</module>-->
+
+
+        <!-- ============================== -->
+        <!-- JAVADOC COMMENTS               -->
+        <!-- ============================== -->
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="AtclauseOrder">-->
+        <!--<property name="tagOrder" value="@author, @version, @param, @return, @throws, @exception, @see, @since, @serial, @serialField, @serialData, @deprecated"/>-->
+        <!--<property name="target"   value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>-->
+        <!--</module>-->
+
+        <!-- DISABLED: Disable for now, but this should be turned on soon (TODO). -->
+        <!--<module name="JavadocMethod">-->
+        <!--<property name="scope"              value="public"/>-->
+        <!--<property name="allowUndeclaredRTE" value="true"/>-->
+        <!--</module>-->
+
+        <module name="JavadocStyle">
+            <!--<property name="scope" value="public"/>-->
+        </module>
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="JavadocParagraph"/>-->
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="JavadocTagContinuationIndentation">-->
+        <!--<property name="tagContinuationIndentation" value="4"/>-->
+        <!--</module>-->
+
+        <!-- DISABLED: Disable for now, but this should be turned on soon (TODO). -->
+        <!--<module name="JavadocType">-->
+        <!--<property name="scope" value="public"/>-->
+        <!--</module>-->
+
+        <!-- DISABLED: Disable for now, but this should be turned on soon (TODO). -->
+        <!--<module name="JavadocVariable">-->
+        <!--<property name="scope" value="public"/>-->
+        <!--</module>-->
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="NonEmptyAtclauseDescription"/>-->
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="SingleLineJavadoc"/>-->
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="SummaryJavadocCheck"/>-->
+
+        <!-- DISABLED: Nothing to report currently. -->
+        <!--<module name="WriteTag"/>-->
+
+
+        <!-- ============================== -->
+        <!-- METRICS                        -->
+        <!-- ============================== -->
+
+        <module name="BooleanExpressionComplexity">
+            <property name="max" value="8"/>
+        </module>
+
+        <module name="ClassDataAbstractionCoupling">
+            <property name="max" value="20"/>
+        </module>
+
+        <module name="ClassFanOutComplexity">
+            <property name="max" value="32"/>
+        </module>
+
+        <module name="CyclomaticComplexity">
+            <property name="max" value="16"/>
+        </module>
+
+        <module name="JavaNCSS">
+            <property name="classMaximum"  value="1500"/>
+            <property name="fileMaximum"   value="2000"/>
+            <property name="methodMaximum" value="256"/>
+        </module>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="NPathComplexity"/>-->
+
+
+        <!-- ============================== -->
+        <!-- MISCELLANEOUS                  -->
+        <!-- ============================== -->
+
+        <module name="ArrayTypeStyle">
+            <property name="javaStyle" value="true"/>
+        </module>
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="AvoidEscapedUnicodeCharacters">-->
+        <!--<property name="allowByTailComment" value="true"/>-->
+        <!--</module>-->
+
+        <!-- DISABLED: TODO: Needs more research. -->
+        <!--<module name="DescendantToken"/>-->
+
+        <!-- DISABLED: Too many false positives.  -->
+        <!--<module name="FinalParameters">-->
+        <!--<property name="tokens" value="METHOD_DEF, CTOR_DEF, LITERAL_CATCH"/>-->
+        <!--<property name="ignorePrimitiveTypes" value="true"/>-->
+        <!--</module>-->
+
+        <module name="Indentation">
+            <property name="caseIndent" value="4"/>
+        </module>
+
+        <module name="OuterTypeFilename"/>
+
+        <!-- DISABLED: Anything is allowed. -->
+        <!--<module name="Regexp">-->
+
+        <!-- DISABLED: TODO comments should not fail the build (for now). -->
+        <!--<module name="TodoComment">-->
+        <!--<property name="format" value="TODO:"/>-->
+        <!--</module>-->
+
+        <!-- DISABLED: Trailing comments are allowed. -->
+        <!--<module name="TrailingComment"/>-->
+
+        <module name="UncommentedMain"/>
+        <module name="UpperEll"/>
+
+
+        <!-- ============================== -->
+        <!-- MODIFIERS                      -->
+        <!-- ============================== -->
+
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+
+
+        <!-- ============================== -->
+        <!-- NAMING CONVENTIONS             -->
+        <!-- ============================== -->
+
+        <module name="AbbreviationAsWordInName">
+            <property name="tokens"                    value="VARIABLE_DEF,CLASS_DEF"/>
+            <property name="ignoreStatic"              value="true"/>
+            <property name="allowedAbbreviationLength" value="6"/>
+            <property name="allowedAbbreviations"      value="XML,URL"/>
+        </module>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="AbstractClassName">-->
+        <!--<property name="format" value="^Abstract.*$|^.*Factory$"/>-->
+        <!--</module>-->
+
+        <module name="ClassTypeParameterName">
+            <property name="format" value="^[A-Z]$"/>
+        </module>
+
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+        </module>
+
+        <module name="InterfaceTypeParameterName">
+            <property name="format" value="^[A-Z][a-zA-Z]*$"/>
+        </module>
+
+        <module name="LocalFinalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!--
+             Method names can have a '_' (underscore) in the unit tests.  There is no
+             easy way to configure different rules for main and test in checkstyle, so
+             we rely here on the fact that test methods start with 'test' (this it not
+             perfect as non JUnit methods can also start with 'test').
+        -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$|^test[_a-zA-Z0-9]*"/>
+        </module>
+
+        <module name="MethodTypeParameterName">
+            <property name="format" value="^[A-Z0-9]+$"/>
+        </module>
+
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-zA-Z_][a-zA-Z0-9_]*)*$"/>
+        </module>
+
+        <module name="ParameterName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <module name="StaticVariableName">
+            <property name="format" value="^[a-zA-Z][a-zA-Z0-9]*(_[a-zA-Z0-9]+)*$"/>
+        </module>
+
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
+
+
+        <!-- ============================== -->
+        <!-- SIZE VIOLATIONS                -->
+        <!-- ============================== -->
+
+        <module name="AnonInnerLength">
+            <property name="max" value="64"/>
+        </module>
+
+        <module name="ExecutableStatementCount">
+            <property name="max" value="256"/>
+        </module>
+
+
+
+
+
+        <module name="MethodCount">
+            <property name="maxTotal"     value="100"/>
+            <property name="maxPrivate"   value="100"/>
+            <property name="maxPackage"   value="100"/>
+            <property name="maxProtected" value="100"/>
+            <property name="maxPublic"    value="100"/>
+        </module>
+
+        <module name="MethodLength">
+            <property name="tokens"     value="METHOD_DEF, CTOR_DEF"/>
+            <property name="max"        value="256"/>
+            <property name="countEmpty" value="false"/>
+        </module>
+
+        <module name="OuterTypeNumber"/>
+
+        <module name="ParameterNumber">
+            <property name="max" value="16"/>
+        </module>
+
+
+        <!-- ============================== -->
+        <!-- WHITESPACE                     -->
+        <!-- ============================== -->
+
+        <module name="EmptyForInitializerPad"/>
+        <module name="EmptyForIteratorPad"/>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="EmptyLineSeparator"/>-->
+
+        <module name="GenericWhitespace"/>
+
+        <module name="MethodParamPad">
+            <property name="tokens"          value="CTOR_DEF, METHOD_DEF"/>
+            <property name="option"          value="space"/>
+            <property name="allowLineBreaks" value="false"/>
+        </module>
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="NoLineWrap"/>-->
+
+        <module name="NoWhitespaceAfter">
+            <property name="tokens" value="BNOT, DEC, DOT, INC, UNARY_MINUS, UNARY_PLUS"/>
+        </module>
+
+        <module name="NoWhitespaceBefore">
+            <property name="tokens" value="SEMI, POST_DEC, POST_INC"/>
+        </module>
+
+        <module name="OperatorWrap">
+            <property name="tokens" value="BAND, BOR, BSR, BXOR, DIV, EQUAL, GE, GT, LE, LITERAL_INSTANCEOF, LT, MINUS, MOD, NOT_EQUAL, PLUS, SL, SR, STAR"/>
+            <property name="option" value="eol"/>
+        </module>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="ParenPad">-->
+        <!--<property name="tokens" value="CTOR_CALL, LPAREN, METHOD_CALL, RPAREN, SUPER_CTOR_CALL"/>-->
+        <!--<property name="option" value="nospace"/>-->
+        <!--</module>-->
+
+        <!-- UNSUPPORTED -->
+        <!--<module name="SeparatorWrap"/>-->
+
+        <module name="TypecastParenPad"/>
+        <module name="WhitespaceAfter"/>
+
+        <!-- DISABLED: Too many false positives. -->
+        <!--<module name="WhitespaceAround">-->
+        <!--<property name="allowEmptyConstructors" value="true"/>-->
+        <!--<property name="allowEmptyLoops"        value="true"/>-->
+        <!--<property name="allowEmptyMethods"      value="true"/>-->
+        <!--<property name="allowEmptyTypes"        value="true"/>-->
+        <!--</module>-->
+    </module>
+</module>

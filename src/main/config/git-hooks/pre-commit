@@ -1,0 +1,610 @@
+#!/bin/bash
+
+# Script called by "git commit" with no arguments.
+
+
+# ======================================================================================================================
+# CONFIGURATION
+# ======================================================================================================================
+
+# ----------  Raw copyright  ----------
+
+declare -r CURRENT_YEAR=`date +%Y`
+
+declare -r CURRENT_SIMPLE_YEAR_LINE="Copyright © ${CURRENT_YEAR} Unified Social, Inc."
+declare -r CURRENT_DOUBLE_YEAR_LINE="Copyright © 20[0-9][0-9]-${CURRENT_YEAR} Unified Social, Inc."
+
+declare -r SIMPLE_YEAR_LINE="Copyright © \(20[0-9][0-9]\) Unified Social, Inc."
+declare -r DOUBLE_YEAR_LINE="Copyright © \(20[0-9][0-9]\)-\(20[0-9][0-9]\) Unified Social, Inc."
+
+declare -r RAW_COPYRIGHT=$(cat << EOF
+${CURRENT_SIMPLE_YEAR_LINE}
+180 Madison Avenue, 23rd Floor, New York, NY 10016, U.S.A.
+All rights reserved.
+
+This software (the "Software") is provided pursuant to the license agreement you entered into with Unified Social,
+Inc. (the "License Agreement").  The Software is the confidential and proprietary information of Unified Social,
+Inc., and you shall use it only in accordance with the terms and conditions of the License Agreement.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE."  UNIFIED SOCIAL, INC. MAKES NO WARRANTIES OF ANY KIND, WHETHER
+EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES AND CONDITIONS OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+EOF
+)
+
+IFS=$'\n' read -r -d '' -a RAW_COPYRIGHT_LINES <<< "${RAW_COPYRIGHT}"
+
+
+# ----------  Languages related strings  ----------
+
+declare -r Go=0
+declare -r Java=1
+declare -r Properties=2
+declare -r Python=3
+declare -r Shell=4
+declare -r Xml=5
+
+declare -a COMMENTS_START
+COMMENTS_START[Go]="////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n/*"
+COMMENTS_START[Java]="${COMMENTS_START[Go]}"
+COMMENTS_START[Properties]="########################################################################################################################\n#"
+COMMENTS_START[Python]="${COMMENTS_START[Properties]}"
+COMMENTS_START[Shell]="${COMMENTS_START[Properties]}"
+COMMENTS_START[Xml]="<!--\n  ======================================================================================================================"
+
+declare -a COMMENTS_MIDDLE
+COMMENTS_MIDDLE[Go]=" * "
+COMMENTS_MIDDLE[Java]="${COMMENTS_MIDDLE[Go]}"
+COMMENTS_MIDDLE[Properties]="# "
+COMMENTS_MIDDLE[Python]="${COMMENTS_MIDDLE[Properties]}"
+COMMENTS_MIDDLE[Shell]="${COMMENTS_MIDDLE[Properties]}"
+COMMENTS_MIDDLE[Xml]="  "
+
+declare -a COMMENTS_END
+COMMENTS_END[Go]=" */\n\n////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////"
+COMMENTS_END[Java]="${COMMENTS_END[Go]}"
+COMMENTS_END[Properties]="#\n########################################################################################################################"
+COMMENTS_END[Python]="${COMMENTS_END[Properties]}"
+COMMENTS_END[Shell]="${COMMENTS_END[Properties]}"
+COMMENTS_END[Xml]="  ======================================================================================================================\n-->"
+
+declare -a CHECKS
+CHECKS[Go]="run_checks_go"
+CHECKS[Java]="run_checks_java"
+CHECKS[Shell]=":"
+CHECKS[Properties]=":"
+CHECKS[Python]="run_checks_python"
+CHECKS[Xml]=":"
+
+
+# ----------  Others  ----------
+
+[ -z "${SKIP_MAIN}" ] && SKIP_MAIN=false
+
+
+# ======================================================================================================================
+# FUNCTIONS - UTILS
+# ======================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Trims (removes leading and trailing whitepsaces) from the input string.
+#
+# Input
+#   - [String] String to trim
+#
+# Output
+#   - [String] Trimmed string
+# ----------------------------------------------------------------------------------------------------------------------
+
+function trim () {
+    local var="$*"
+    var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
+    echo -n "$var"
+}
+
+
+# ======================================================================================================================
+# FUNCTIONS - COPYRIGHT NOTICE
+# ======================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Creates the copyright notice with the specified parameters.
+#
+# Input
+#   - [String]     Multi-line comment start string (language specific)
+#   - [String]     Multi-line comment middle line string (language specific)
+#   - [String]     Multi-line comment end string (language specific)
+#   - [Reference]  Variable reference where to store the detected language
+#
+# Output
+#   - [Integer] 0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function create_copyright () {
+    local __COMMENT_START=$1
+    local __COMMENT_MIDDLE=$2
+    local __COMMENT_END=$3
+    local __RESULT=$4
+
+    local __NOTICE=""
+    local __NOTICE="${__NOTICE}${__COMMENT_START}\n"
+
+    local __COMMENT_MIDDLE_TRIMMED=$(echo "${__COMMENT_MIDDLE}" | sed 's/ *$//g')
+
+    local __LINE=""
+    while read -r __LINE; do
+        if [ -z "${__LINE}" ]; then
+            __NOTICE="${__NOTICE}${__COMMENT_MIDDLE_TRIMMED}\n"
+        else
+            __NOTICE="${__NOTICE}${__COMMENT_MIDDLE}${__LINE}\n"
+        fi
+    done <<< "${RAW_COPYRIGHT}"
+
+    local __NOTICE="${__NOTICE}${__COMMENT_END}\n"
+
+    eval ${__RESULT}="'${__NOTICE}'"
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Checks the copyright in the specified file (if any).
+#
+# Input
+#   - [String] Path to the file to analyze
+#
+# Output
+#   - [Integer] 0 if the copyright exists, is single line, and is     up to date
+#   - [Integer] 1 if the copyright exists, is double line, and is     up to date
+#   - [Integer] 2 if the copyright exists, is simple line, and is not up to date
+#   - [Integer] 3 if the copyright exists, is double line, and is not up to date
+#   - [Integer] 4 if the copyright exists, but is not simple or double line
+#   - [Integer] 5 if the copyright does not exist
+# ----------------------------------------------------------------------------------------------------------------------
+
+function check_copyright () {
+    local __FILE=$1
+
+    local __MATCHES=0
+    local __LINE=""
+
+    for __LINE in "${RAW_COPYRIGHT_LINES[@]}"; do
+        head -n 20 "${__FILE}" | grep -m1 "${__LINE}" > /dev/null 2>&1 && ((++__MATCHES))
+    done
+
+    # All lines match, nothing to do
+    if [ ${__MATCHES} -eq ${#RAW_COPYRIGHT_LINES[@]} ]; then
+        return 0
+
+    # One line did not match, check if the "year" line is wrong
+    elif [ $((__MATCHES + 1)) -eq ${#RAW_COPYRIGHT_LINES[@]} ]; then
+        # "year" line is a double year line and it is current
+        head -n 20 "${__FILE}" | grep -m1 "${CURRENT_DOUBLE_YEAR_LINE}" > /dev/null 2>&1 && return 1
+
+        # "year" line is a simple year line, and so it needs to be updated
+        head -n 20 "${__FILE}" | grep -m1 "${SIMPLE_YEAR_LINE}" > /dev/null 2>&1 && return 2
+
+        # "year" line is a double year line, and so it needs to be updated
+        head -n 20 "${__FILE}" | grep -m1 "${DOUBLE_YEAR_LINE}" > /dev/null 2>&1 && return 3
+
+        # Something is really wrong with the year line
+        return 4
+
+    # The copyright notice is most likely not present
+    else
+        return 5
+    fi
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Updates the copyright notice in the specified file, if needed (add it if not present, or update year line if needed).
+#
+# Input
+#   - [String] Path to the file to analyze
+#
+# Output
+#   - [Integer] 0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function update_copyright () {
+    local __FILE=$1
+
+    local __FILE_LANGUAGE=""
+    detect_language "${__FILE}" __FILE_LANGUAGE
+    if [[ $? -ne 0 ]]; then
+        # Language cannot be determined, this file should not be updated
+        return 0
+    fi
+
+    local __COPYRIGHT
+    create_copyright                             \
+        "${COMMENTS_START[${__FILE_LANGUAGE}]}"  \
+        "${COMMENTS_MIDDLE[${__FILE_LANGUAGE}]}" \
+        "${COMMENTS_END[${__FILE_LANGUAGE}]}"    \
+        __COPYRIGHT                              \
+    || return $?
+
+    check_copyright "${__FILE}"
+    case $? in
+        # Nothing to do, "year" line is current
+        0);;
+        1);;
+
+        # Update simple "year" line
+        2)
+            echo >&2 "[POLICY] Updating copyright notice in file \"${__FILE}\" (backup is in *.bak)..."
+            sed -i.bak -E "1,/20[0-9][0-9]/s/(20[0-9][0-9])/\1-${CURRENT_YEAR}/" "${__FILE}" || return $?
+            ;;
+
+        # Update double "year" line
+        3)
+            echo >&2 "[POLICY] Updating copyright notice in file \"${__FILE}\" (backup is in *.bak)..."
+            sed -i.bak -E "1,/20[0-9][0-9]-20[0-9][0-9]/s/(20[0-9][0-9]-)(20[0-9][0-9])/\1${CURRENT_YEAR}/" "${__FILE}" || return $?
+            ;;
+
+        # Copyright notice not present, add it
+        5)
+            local __ADD_COPYRIGHT="true"
+
+            if [ ${__FILE_LANGUAGE} -eq ${Xml} ]; then
+                local __FIRST_LINE=$( awk 'NF{print;exit}' "${__FILE}" )
+                local __FIRST_LINE=$( trim "${__FIRST_LINE}" )
+
+                # Line starts with a processing instruction
+                if [ "${__FIRST_LINE:0:5}" == "<?xml" ]; then
+                    __ADD_COPYRIGHT="false"
+
+                    # Line ends with the processing instruction
+                    if [ "${__FIRST_LINE:(-2)}" == "?>" ]; then
+                        echo >&2 "[POLICY] Adding copyright notice to file \"${__FILE}\"..."
+
+                        cp "${__FILE}" "${__FILE}.bak"                                                 \
+                            && awk '{print;} NF{exit;}' "${__FILE}.bak"                  > "${__FILE}" \
+                            && printf "\n${__COPYRIGHT}\n"                              >> "${__FILE}" \
+                            && awk '{if(found==1){print;}} NF{found=1}' "${__FILE}.bak" >> "${__FILE}"
+                    #else
+                        # We cannot add the the copyright notice here, as there are other tags on the same line as the
+                        # processing instruction.
+                    fi
+                fi
+            fi
+
+            if [ "${__ADD_COPYRIGHT}" == "true" ]; then
+                echo >&2 "[POLICY] Adding copyright notice to file \"${__FILE}\"..."
+                cp "${__FILE}" "${__FILE}.bak" && printf "${__COPYRIGHT}\n" | cat - "${__FILE}.bak" > "${__FILE}"
+            fi
+            ;;
+
+        # Unexpected error
+        4)
+            echo >&2 "[POLICY] Erroneous copyright in file \"${__FILE}\", aborting..."
+            return 1
+            ;;
+
+        *)
+            echo >&2 "[POLICY] Unexpected error in file \"${__FILE}\", aborting..."
+            return 1
+            ;;
+    esac
+
+    return 0;
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Updates the copyright notices of the files which are being commited (if needed).
+#
+# Output
+#   - [Integer] 0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function update_copyrights () {
+    git diff --cached --name-only --diff-filter=ACMR | while read -r FILE; do
+        update_copyright "${FILE}" || return $?
+    done || return $?
+
+    return 0
+}
+
+
+# ======================================================================================================================
+# FUNCTIONS - PROGRAMMING LANGUAGE
+# ======================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Detects the language from a file extension.
+#
+# Input
+#   - [String]     File extension to analyze
+#   - [Reference]  Variable reference where to store the detected language
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function get_language_from_extension () {
+    local __EXTENSION=$1
+    local __RESULT=$2
+
+    local __DETECTED_LANGUAGE=""
+
+    case "${__EXTENSION}" in
+        go)         __DETECTED_LANGUAGE="${Go}";;
+        java)       __DETECTED_LANGUAGE="${Java}";;
+        class)      __DETECTED_LANGUAGE="${Java}";;
+        properties) __DETECTED_LANGUAGE="${Properties}";;
+        py)         __DETECTED_LANGUAGE="${Python}";;
+        pyc)        __DETECTED_LANGUAGE="${Python}";;
+        sh)         __DETECTED_LANGUAGE="${Shell}";;
+        xml)        __DETECTED_LANGUAGE="${Xml}";;
+        *)          return 1;;
+    esac
+
+    eval ${__RESULT}="'${__DETECTED_LANGUAGE}'"
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Detects the language of the specified file.
+#
+# Input
+#   - [String]     Path to the file to analyze
+#   - [Reference]  Variable reference where to store the detected language
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function detect_language () {
+    local __FILE=$1
+    local __RESULT=$2
+
+    local __FILENAME=$(basename "${__FILE}")
+    local __EXTENSION="${__FILENAME##*.}"
+    local __FILENAME="${__FILENAME%.*}"
+
+    local __LANGUAGE=""
+    get_language_from_extension "${__EXTENSION}" __LANGUAGE || return $?
+
+    # TODO: use `file "${__FILE}" as a failover`
+
+    eval ${__RESULT}="'${__LANGUAGE}'"
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Detects the project's main language.
+#
+# Input
+#   - [String]     Root folder of the project
+#   - [Reference]  Variable reference where to store the detected language
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function detect_project_language () {
+    local __ROOT_FOLDER=$1
+    local __RESULT=$2
+
+    local __PROJECT_LANGUAGE=""
+
+    if [ -f "${__ROOT_FOLDER}/pom.xml" ]; then
+        __PROJECT_LANGUAGE=${Java}
+
+    elif [ -f "${__ROOT_FOLDER}/main.go" ]; then
+        __PROJECT_LANGUAGE=${Go}
+
+#    elif [ -f "${__ROOT_FOLDER}/requirements.txt" ]; then
+#        __PROJECT_LANGUAGE=${Python}
+
+    else
+        local __EXTENSION=`find "${__ROOT_FOLDER}" -type f -exec basename {} \; | sed -e "s/.*\.\([^.]*\)/\1/" | sort | uniq -c | sort -rn | head -1 | sed -e "s/.* \(.*\)/\1/"`
+        get_language_from_extension "${__EXTENSION}"  __PROJECT_LANGUAGE || return $?
+    fi
+
+    eval ${__RESULT}="'${__PROJECT_LANGUAGE}'"
+
+    return 0
+}
+
+
+# ======================================================================================================================
+# FUNCTIONS - CHECKS
+# ======================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Run checks for a Java project.
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_checks_java () {
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Validating the build (checkstyles, etc), please be patient..."
+    echo >&2 "[POLICY]"
+
+    # Run unit tests
+    mvn -Dmavanagaiata.commit.skip=true validate > .githook.log 2>&1
+    if [[ $? -ne 0 ]]; then
+        echo >&2 "[POLICY]"
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY] Please run \"mvn validate\" and fix any issues before committing."
+        echo >&2 "[POLICY]"
+        echo >&2 "[POLICY] Log:"
+        cat .githook.log >&2
+        echo >&2 "[POLICY]"
+
+        rm -f .githook.log
+
+        return 1
+    fi
+
+    rm -f .githook.log
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Run checks for a Go project.
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_checks_go () {
+    # ----------  Retrieve files being commited  ----------
+
+    local GO_FILES=$(git diff --staged --name-only --diff-filter=ACM | grep '\.go$')
+    [ -z "${GO_FILES}" ] && return 0
+
+
+    # ----------  Make sure the code is formatted properly  ----------
+
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Checking code formatting, please be patient..."
+    echo >&2 "[POLICY]"
+
+    local UNFORMATTED=$(gofmt -l ${GO_FILES})
+    if [ -z "${UNFORMATTED}" ]; then
+        echo >&2 "[POLICY] All go files are formatted properly using gofmt."
+        echo >&2 "[POLICY]"
+    else
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY]"
+        echo >&2 "[POLICY] Go files must be formatted with gofmt. The following go files did not pass go fmt check: "
+
+        for filename in ${UNFORMATTED}; do
+            echo >&2 "[POLICY]   $PWD/${filename}"
+        done
+
+        echo >&2 "[POLICY]"
+        echo >&2 '[POLICY] Please run "go fmt ." in the project root to format all files.'
+        echo >&2 "[POLICY]"
+
+        return 1
+    fi
+
+
+    # ----------  Make sure there are no obvious errors with the code  ----------
+
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Checking code for potential errors, please be patient..."
+    echo >&2 "[POLICY]"
+
+    go vet
+    if [ $? -eq 0 ]; then
+        echo >&2 "[POLICY] The code passed go vet checking."
+        echo >&2 "[POLICY]"
+    else
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY] There were issues found running go vet on the code."
+        echo >&2 "[POLICY]"
+
+        return 1
+    fi
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Run checks for a Python project.
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_checks_python () {
+    # ----------  Retrieve files being commited  ----------
+
+    local PYTHON_FILES=$(git diff --staged --name-only --diff-filter=ACM | grep -i '\.py$')
+    [ -z "${PYTHON_FILES}" ] && return 0
+
+
+    # ----------  Check code hygiene  ----------
+
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Validating the build (checkstyles, etc), please be patient..."
+    echo >&2 "[POLICY]"
+
+    # Check code formatting
+    for filename in ${PYTHON_FILES}; do
+        if command -v autopep8 > /dev/null 2>&1; then
+            autopep8                  \
+                --in-place            \
+                --jobs=0              \
+                --max-line-length=120 \
+                "${filename}"
+        fi
+
+        if command -v docformatter > /dev/null 2>&1; then
+            docformatter                \
+                --in-place              \
+                --wrap-summaries    120 \
+                --wrap-descriptions 120 \
+                "${filename}"
+        fi
+
+        git diff --staged --name-only --diff-filter=ACM | grep -i '\.py$' |  xargs git add
+    done
+
+    # Run code analysis
+    for filename in ${PYTHON_FILES}; do
+        if command -v pylint > /dev/null 2>&1; then
+            pylint "${filename}"
+            if [ $? -ne 0 ]; then
+                echo >&2 "[POLICY] THE BUILD FAILED."
+                echo >&2 "[POLICY] Please run \"pylint ${filename}\" and fix any issues before committing."
+                echo >&2 "[POLICY]"
+
+                # return 1
+            fi
+        fi
+    done
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Automatically detects the project's main language and runs the appropriate checks (if any).
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_checks () {
+    local PROJECT_LANGUAGE=""
+    detect_project_language "." PROJECT_LANGUAGE
+
+    if [ -z "${PROJECT_LANGUAGE}" ]; then
+        echo >&2 "Could not detect project language, aborting..."
+        return 1
+    fi
+
+    "${CHECKS[${PROJECT_LANGUAGE}]}" || return $?
+
+    return 0;
+}
+
+
+# ======================================================================================================================
+# MAIN
+# ======================================================================================================================
+
+if [ "${SKIP_MAIN}" != "true" ]; then
+    run_checks        || exit $?
+
+    exit 0
+fi
+
+
+# ======================================================================================================================

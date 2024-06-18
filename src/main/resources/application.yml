@@ -4,9 +4,9 @@ spring:
     name: asset-management-0701
 
   datasource:
-    url: jdbc:postgresql://ep-crimson-bread-a19wmur8.ap-southeast-1.aws.neon.tech/Ecomerce?user=Ecomerce_owner&password=q6vP0GkKDWxp&sslmode=require
-    username: postgres
-    password: 123456
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -30,12 +30,12 @@ springdoc:
 
 application:
   jwt:
-    secret-key: 39c658a258a42e6ea83c38b59ed9f78076f2d3cf75ec8eb3d80e3aa433370e4a
+    secret-key: ${JWT_SECRET}
     access-token:
-      expiration: 86400 # seconds
+      expiration: ${JWT_EXPIRE} # seconds
     refresh-token:
-      expiration: 604800 # seconds
+      expiration: ${JWT_REFRESH_EXPIRE} # seconds
   admin:
     default:
-      username: admin@local.com
-      password: test1234
+      username: ${ADMIN_DEFAULT_USERNAME}
+      password: ${ADMIN_DEFAULT_PASSWORD}
