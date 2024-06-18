@@ -1,0 +1,243 @@
+#!/bin/bash
+
+# Script called by "git push" with two arguments, the name of the remote to which the push is being done, and the URL to
+# which the push is being done.
+
+
+# ======================================================================================================================
+# CONFIGURATION
+# ======================================================================================================================
+
+# ----------  Languages related strings  ----------
+
+declare -r Go=0
+declare -r Java=1
+declare -r Properties=2
+declare -r Python=3
+declare -r Shell=4
+declare -r Xml=5
+
+declare -a TESTS
+TESTS[Java]="run_tests_java"
+TESTS[Go]="run_tests_go"
+TESTS[Shell]=":"
+TESTS[Properties]=":"
+TESTS[Python]="run_tests_python"
+TESTS[Xml]=":"
+
+
+# ----------  Others  ----------
+
+[ -z "${SKIP_MAIN}" ] && SKIP_MAIN=false
+
+
+# ======================================================================================================================
+# FUNCTIONS - PROGRAMMING LANGUAGE
+# ======================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Detects the language from a file extension.
+#
+# Input
+#   - [String]     File extension to analyze
+#   - [Reference]  Variable reference where to store the detected language
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function get_language_from_extension () {
+    local __EXTENSION=$1
+    local __RESULT=$2
+
+    local __DETECTED_LANGUAGE=""
+
+    case "${__EXTENSION}" in
+        go)         __DETECTED_LANGUAGE="${Go}";;
+        java)       __DETECTED_LANGUAGE="${Java}";;
+        properties) __DETECTED_LANGUAGE="${Properties}";;
+        py)         __DETECTED_LANGUAGE="${Python}";;
+        sh)         __DETECTED_LANGUAGE="${Shell}";;
+        xml)        __DETECTED_LANGUAGE="${Xml}";;
+        *)          return 1;;
+    esac
+
+    eval ${__RESULT}="'${__DETECTED_LANGUAGE}'"
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Detects the project's main language.
+#
+# Input
+#   - [String]     Root folder of the project
+#   - [Reference]  Variable reference where to store the detected language
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function detect_project_language () {
+    local __ROOT_FOLDER=$1
+    local __RESULT=$2
+
+    local __PROJECT_LANGUAGE=""
+
+    if [ -f "${__ROOT_FOLDER}/pom.xml" ]; then
+        __PROJECT_LANGUAGE=${Java}
+
+    elif [ -f "${__ROOT_FOLDER}/main.go" ]; then
+        __PROJECT_LANGUAGE=${Go}
+
+    else
+        local __EXTENSION=`find "${__ROOT_FOLDER}" -type f -print0 | xargs -0 basename | sed -e "s/[^.]*\.\(.*\)/\1/" | sort | uniq -c | sort -rn | head -1 | sed -e "s/.* \(.*\)/\1/"`
+        get_language_from_extension "${__EXTENSION}"  __PROJECT_LANGUAGE || return $?
+    fi
+
+    eval ${__RESULT}="'${__PROJECT_LANGUAGE}'"
+
+    return 0
+}
+
+
+# ======================================================================================================================
+# FUNCTIONS - TESTS
+# ======================================================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Run tests for a Java project.
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_tests_java () {
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Checking the build (unit tests, code coverage, etc), please be patient..."
+    echo >&2 "[POLICY]"
+
+    # Run unit tests
+    mvn test > .githook.log 2>&1
+    if [[ $? -ne 0 ]]; then
+        echo >&2 "[POLICY]"
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY] Please run \"mvn test\" and fix any issues before committing."
+        echo >&2 "[POLICY]"
+        echo >&2 "[POLICY] Log:"
+        cat .githook.log >&2
+        echo >&2 "[POLICY]"
+
+        rm -f .githook.log
+
+        return 1
+    fi
+
+    rm -f .githook.log
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Run tests for a Go project.
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_tests_go () {
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Running tests, please be patient..."
+    echo >&2 "[POLICY]"
+
+    # Run unit tests
+    ginkgo -r -p --randomizeAllSpecs --randomizeSuites --failOnPending --cover --trace --race --progress ./app/ ./lib/
+    if [ $? -eq 0 ]; then
+        echo >&2 "[POLICY] The unit tests passed."
+        echo >&2 "[POLICY]"
+    else
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY] Unit tests did not pass, please fix any issues before pushing."
+        echo >&2 "[POLICY]"
+
+        return 1
+    fi
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Run tests for a Python project.
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_tests_python () {
+    echo >&2 "[POLICY]"
+    echo >&2 "[POLICY] Running tests, please be patient..."
+    echo >&2 "[POLICY]"
+
+    # Check for pdb trace files
+    git --no-pager grep -n 'pdb\.set_trace'  -- "*.py"
+    if [ $? -ne 0 ]; then
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY] Please remove file pdb.set_trace before pushing."
+        echo >&2 "[POLICY]"
+        return 1
+    fi
+
+    # Run unit tests
+    nosetests
+    if [ $? -eq 0 ]; then
+        echo >&2 "[POLICY] The unit tests passed."
+        echo >&2 "[POLICY]"
+    else
+        echo >&2 "[POLICY] THE BUILD FAILED."
+        echo >&2 "[POLICY] Unit tests did not pass, please fix any issues before pushing."
+        echo >&2 "[POLICY]"
+
+        return 1
+    fi
+
+    return 0
+}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Automatically detects the project's main language and runs the appropriate tests (if any).
+#
+# Output
+#   - [Integer]  0 if successful
+# ----------------------------------------------------------------------------------------------------------------------
+
+function run_tests () {
+    local PROJECT_LANGUAGE=""
+    detect_project_language "." PROJECT_LANGUAGE || return $?
+
+    if [ -z "${PROJECT_LANGUAGE}" ]; then
+        echo >&2 "[POLICY] Could not detect project language, aborting..."
+        return 1
+    fi
+
+    "${TESTS[${PROJECT_LANGUAGE}]}" || return $?
+
+    return 0;
+}
+
+
+# ======================================================================================================================
+# MAIN
+# ======================================================================================================================
+
+if [ "${SKIP_MAIN}" != "true" ]; then
+    run_tests || exit $?
+
+    exit 0
+fi
+
+
+# ======================================================================================================================

@@ -27,6 +27,10 @@
         <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
         <jacoco.version>0.8.12</jacoco.version>
         <jacoco.minimumInstructionCoverage>0.80</jacoco.minimumInstructionCoverage>
+        <maven-checkstyle-plugin.version>3.4.0</maven-checkstyle-plugin.version>
+        <checkstyle.version>10.17.0</checkstyle.version>
+        <checkstyle.config.location>src/main/config/checkstyle/checkstyle.xml</checkstyle.config.location>
+        <checkstyle.check.skip>true</checkstyle.check.skip>
     </properties>
     <dependencies>
         <dependency>
@@ -59,7 +63,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${projectlombok-lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -96,6 +99,11 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
         </dependency>
     </dependencies>
 
@@ -165,7 +173,7 @@
                         <exclude>**/constants/**</exclude>
                         <exclude>**/configs/**</exclude>
                         <exclude>**/repositories/**</exclude>
-						<exclude>**/enums/**</exclude>
+                        <exclude>**/enums/**</exclude>
                         <exclude>**/exceptions/**</exclude>
                         <exclude>**/validators/**</exclude>
                     </excludes>
@@ -182,6 +190,58 @@
                         </rule>
                     </rules>
                 </configuration>
+            </plugin>
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <skip>${checkstyle.check.skip}</skip>
+                    <configLocation>${checkstyle.config.location}</configLocation>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <executions>
+                    <execution>
+
+                        <id>validate: checkstyle</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!--  ========================================================================================  -->
+                <!--                                  Add Git Hook                                              -->
+                <!--  ========================================================================================  -->
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-hooks</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/.git/hooks</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/git-hooks</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
