@@ -1,11 +1,26 @@
 package com.nashtech.rookie.asset_management_0701.entities;
 
-import com.nashtech.rookie.asset_management_0701.enums.EGender;
-import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
-import jakarta.persistence.*;
-import lombok.*;
+import java.time.LocalDate;
 
-import java.time.LocalDateTime;
+import com.nashtech.rookie.asset_management_0701.enums.EGender;
+import com.nashtech.rookie.asset_management_0701.enums.ERole;
+import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 
 @Entity
 @Getter
@@ -14,7 +29,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User extends AuditEntity<String>{
+public class User extends AuditEntity<String> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,9 +44,12 @@ public class User extends AuditEntity<String>{
 
     private String hashPassword;
 
-    private LocalDateTime dob;
+    private LocalDate dob;
 
-    private LocalDateTime joinDate;
+    private LocalDate joinDate;
+
+    @Enumerated(EnumType.STRING)
+    private ERole role;
 
     @Column(unique = true)
     private String staffCode;
@@ -42,9 +60,6 @@ public class User extends AuditEntity<String>{
     @Enumerated(EnumType.STRING)
     private EGender gender;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private Location location;
-
-    @ManyToOne
-    private Role role;
 }

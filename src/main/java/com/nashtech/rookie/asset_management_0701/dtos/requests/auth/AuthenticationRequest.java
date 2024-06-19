@@ -1,0 +1,22 @@
+package com.nashtech.rookie.asset_management_0701.dtos.requests.auth;
+
+import com.nashtech.rookie.asset_management_0701.validators.field_not_empty.FieldNotEmptyConstraint;
+import com.nashtech.rookie.asset_management_0701.validators.field_not_null.FieldNotNullConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class AuthenticationRequest {
+
+    @FieldNotEmptyConstraint(field = "username", message = "FILED_NOT_EMPTY")
+    @FieldNotNullConstraint(field = "username", message = "FILED_NOT_NULL")
+    private String username;
+
+    @FieldNotNullConstraint(field = "password", message = "FILED_NOT_NULL")
+    private String password;
+}

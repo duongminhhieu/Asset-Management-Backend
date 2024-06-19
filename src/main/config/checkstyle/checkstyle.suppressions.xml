@@ -5,5 +5,36 @@
         >
 
 <suppressions>
+    <suppress
+            checks="HideUtilityClassConstructor"
+            files=".AssetManagement0701Application.java"
+    />
 
+    <suppress
+            checks="UncommentedMain"
+            files=".AssetManagement0701Application.java"
+    />
+
+    <suppress
+        checks="AvoidStaticImport"
+        files="[/\\]validators[/\\]"
+    />
+
+
+    <suppress
+            checks="AnnotationUseStyle"
+            files="[/\\]validators[/\\]"
+    />
+    <suppress
+            checks="UncommentedMain"
+            files=".AssetManagement0701ApplicationTests.java"/>
+
+
+    <suppress checks="AvoidStaticImport"
+              files=".*Test\.java"
+    />
+
+    <suppress checks="MethodName"
+              files=".*Test\.java"
+    />
 </suppressions>

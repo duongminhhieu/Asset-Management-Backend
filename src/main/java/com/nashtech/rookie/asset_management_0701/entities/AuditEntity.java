@@ -1,23 +1,24 @@
 package com.nashtech.rookie.asset_management_0701.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
-import lombok.Getter;
-import lombok.Setter;
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public class AuditEntity<U>{
+public class AuditEntity<U> {
     @CreatedBy
     @Column(name = "created_by")
     protected U createdBy;
@@ -33,5 +34,4 @@ public class AuditEntity<U>{
     @LastModifiedDate
     @Column(name = "last_modified_date")
     protected LocalDateTime lastModifiedDate;
-
 }

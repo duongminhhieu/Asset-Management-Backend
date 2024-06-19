@@ -16,6 +16,11 @@
 
     <module name="SuppressWarningsFilter"/>
 
+
+    <module name="SuppressionFilter">
+        <property name="file" value="src/main/config/checkstyle/checkstyle.suppressions.xml"/>
+    </module>
+
     <!-- ============================== -->
     <!-- JAVADOC COMMENTS               -->
     <!-- ============================== -->
