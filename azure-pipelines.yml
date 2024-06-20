@@ -15,7 +15,7 @@ variables:
   resouceGroupName: 'rookies7'
   imageName: 'assset-backend'
   registryName: 'rookie7reg.azurecr.io'
-  appName: 'asset-be'
+  appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '0.0.1-dev'
 
