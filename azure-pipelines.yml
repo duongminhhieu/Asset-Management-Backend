@@ -49,29 +49,29 @@ stages:
           tags: |
             $(tag)
 
-# - stage: Deploy
-#   displayName: Deploy 
-#   pool:
-#     vmImage: ubuntu-latest
-#   jobs:
-#     - job: container
-#       displayName: create container
-#       steps:
-#       - task: AzureCLI@2
-#         displayName: 'set env'
-#         inputs:
-#           azureSubscription: $(azureSubscription)
-#           scriptType: 'bash'
-#           scriptLocation: 'inlineScript'
-#           inlineScript: |
-#             db_url=$(DB_URL)
-#             db_username=$(DB_USERNAME)
-#             db_password=$(DB_PASSWORD)
-
-#             az webapp config appsettings set --resource-group $(resourceGroupName) --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password 
-#       - task: AzureWebAppContainer@1
-#         displayName: 'Azure Web App on Container Deploy'
-#         inputs:
-#           azureSubscription: $(azureSubscription)
-#           appName: $(appName)
-#           containers: $(registryName)/$(imageName):$(tag)
+- stage: Deploy
+  displayName: Deploy 
+  pool:
+    vmImage: ubuntu-latest
+  jobs:
+    - job: container
+      displayName: create container
+      steps:
+      - task: AzureCLI@2
+        displayName: 'set env'
+        inputs:
+          azureSubscription: 'Visual Studio Enterprise Subscription – MPN(86b7e5ed-c9e5-41a2-a581-7447b9743234)'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            db_url=$(DB_URL)
+            db_username=$(DB_USERNAME)
+            db_password=$(DB_PASSWORD)
+            
+            az webapp config appsettings set --resource-group $(resourceGroupName) --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password
+      - task: AzureWebAppContainer@1
+        displayName: 'Azure Web App on Container Deploy'
+        inputs:
+          azureSubscription: 'Visual Studio Enterprise Subscription – MPN(86b7e5ed-c9e5-41a2-a581-7447b9743234)'
+          appName: '$(appName)'
+          containers: '$(registryName)/$(imageName):$(tag)'
