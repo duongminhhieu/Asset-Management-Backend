@@ -20,34 +20,34 @@ variables:
   tag: '0.0.1-dev'
 
 stages:
-- stage: Build
-  displayName: 'Build and Test and Package'
-  pool:
-    vmImage: ubuntu-latest
-  jobs:
-    - job: Build
-      displayName: 'Test and Package'
-      steps:
-      - task: Maven@3
-        inputs:
-          mavenPomFile: 'pom.xml'
-          mavenOptions: '-Xmx3072m -DskipTests'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: '21'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: true
-          testResultsFiles: '**/surefire-reports/TEST-*.xml'
-          goals: 'package'
+# - stage: Build
+#   displayName: 'Build and Test and Package'
+#   pool:
+#     vmImage: ubuntu-latest
+#   jobs:
+#     - job: Build
+#       displayName: 'Test and Package'
+#       steps:
+#       - task: Maven@3
+#         inputs:
+#           mavenPomFile: 'pom.xml'
+#           mavenOptions: '-Xmx3072m -DskipTests'
+#           javaHomeOption: 'JDKVersion'
+#           jdkVersionOption: '21'
+#           jdkArchitectureOption: 'x64'
+#           publishJUnitResults: true
+#           testResultsFiles: '**/surefire-reports/TEST-*.xml'
+#           goals: 'package'
       
-      - task: Docker@2
-        displayName: 'Build and push an image to container registry'
-        inputs:
-          command: buildAndPush
-          repository: $(registryName)/$(imageName)
-          dockerfile: $(dockerfilePath)
-          containerRegistry: 'RookieReg'
-          tags: |
-            $(tag)
+#       - task: Docker@2
+#         displayName: 'Build and push an image to container registry'
+#         inputs:
+#           command: buildAndPush
+#           repository: $(registryName)/$(imageName)
+#           dockerfile: $(dockerfilePath)
+#           containerRegistry: 'RookieReg'
+#           tags: |
+#             $(tag)
 
 - stage: Deploy
   displayName: Deploy 
@@ -68,7 +68,7 @@ stages:
             db_username=$(DB_USERNAME)
             db_password=$(DB_PASSWORD)
             
-            az webapp config appsettings set --resource-group $(resourceGroupName) --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password
+            az webapp config appsettings set --resource-group 'rookies7' --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password
       - task: AzureWebAppContainer@1
         displayName: 'Azure Web App on Container Deploy'
         inputs:
