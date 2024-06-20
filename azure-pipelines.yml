@@ -10,6 +10,11 @@ pr:
     include:
       - main
 
+variables:
+  imageRepository: 'asset-backend'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '0.0.1-dev'
+
 pool:
   vmImage: ubuntu-latest
 
@@ -23,4 +28,13 @@ steps:
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'test'
+    goals: 'package'
+- task: Build image
+  displayName: Build and push an image to container registry
+  inputs:
+    command: buildAndPush
+    repository: $(REG_SERVER)
+    dockerfile: $(dockerfilePath)
+    containerRegistry: $(REG_SERVICE)
+    tags: |
+      $(tag)
