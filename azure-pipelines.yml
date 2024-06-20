@@ -12,38 +12,71 @@ pr:
 
 variables:
   azureSubscription: 's'
-  imageRepository: 'assset-backend'
+  resouceGroupName: 'rookies7'
+  imageName: 'assset-backend'
+  registryName: 'rookie7reg.azurecr.io'
   appName: 'asset-be'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '0.0.1-dev'
 
-pool:
-  vmImage: ubuntu-latest
+stages:
+- stage: Build
+  displayName: 'Build and Test and Package'
+  pool:
+    vmImage: ubuntu-latest
+  jobs:
+    - job: Build
+      displayName: 'Test and Package'
+      steps:
+      - task: Maven@3
+        inputs:
+          mavenPomFile: 'pom.xml'
+          mavenOptions: '-Xmx3072m'
+          javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '21'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          goals: 'package'
+      - task: Docker@2
+        inputs:
+          containerRegistry: 'RookieReg'
+          repository: 'test1'
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+      # - task: Docker@2
+      #   displayName: 'Build and push an image to container registry'
+      #   inputs:
+      #     command: buildAndPush
+      #     repository: $(registryName)/$(imageName)
+      #     dockerfile: $(dockerfilePath)
+      #     containerRegistry: 'RookieReg'
+      #     tags: |
+      #       $(tag)
 
-steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '21'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
-- task: Docker@2
-  displayName: Build and push an image to container registry
-  inputs:
-    command: buildAndPush
-    repository: ${REG_SERVICE}/$(imageRepository)
-    dockerfile: $(dockerfilePath)
-    containerRegistry: $(REG_SERVICE)
-    tags: |
-      $(tag)
+- stage: Deploy
+  displayName: Deploy 
+  pool:
+    vmImage: ubuntu-latest
+  jobs:
+    - job: container
+      displayName: create container
+      steps:
+      - task: AzureCLI@2
+        displayName: 'set env'
+        inputs:
+          azureSubscription: $(azureSubscription)
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            db_url=$(DB_URL)
+            db_username=$(DB_USERNAME)
+            db_password=$(DB_PASSWORD)
 
-- task: AzureWebAppContainer@1
-  displayName: 'Azure Web App on Container Deploy'
-  inputs:
-    azureSubscription: $(azureSubscription)
-    appName: $(appName)
-    containers: $(REG_SERVICE)/$(imageRepository):$(tag)
+            az webapp config appsettings set --resource-group $(resourceGroupName) --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password 
+      - task: AzureWebAppContainer@1
+        displayName: 'Azure Web App on Container Deploy'
+        inputs:
+          azureSubscription: $(azureSubscription)
+          appName: $(appName)
+          containers: $(registryName)/$(imageName):$(tag)
