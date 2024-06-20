@@ -11,7 +11,9 @@ pr:
       - main
 
 variables:
-  imageRepository: 'asset-backend'
+  azureSubscription: 's'
+  imageRepository: 'assset-backend'
+  appName: 'asset-be'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '0.0.1-dev'
 
@@ -33,8 +35,15 @@ steps:
   displayName: Build and push an image to container registry
   inputs:
     command: buildAndPush
-    repository: $(REG_SERVER)
+    repository: ${REG_SERVICE}/$(imageRepository)
     dockerfile: $(dockerfilePath)
     containerRegistry: $(REG_SERVICE)
     tags: |
       $(tag)
+
+- task: AzureWebAppContainer@1
+  displayName: 'Azure Web App on Container Deploy'
+  inputs:
+    azureSubscription: $(azureSubscription)
+    appName: $(appName)
+    containers: $(REG_SERVICE)/$(imageRepository):$(tag)
