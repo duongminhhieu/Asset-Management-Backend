@@ -19,6 +19,7 @@ public class CategoryCreateDto {
 
     @FieldNotNullConstraint(field = "name", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "name", message = "FIELD_NOT_EMPTY")
+    @Size(max = 255)
     String name;
 
     @FieldNotNullConstraint(field = "code", message = "FIELD_NOT_NULL")

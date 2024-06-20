@@ -55,13 +55,13 @@ class CategoryServiceImplTest {
     @Nested
     class HappyCase {
         @Test
-        void whenCreateNewCategory_thenCreateCategory_returnCreateOk() {
+        void testCreateNewCategory_thenCreateCategory_returnCreateOk() {
             // when
             when(categoryRepository.findByName(categoryCreateDto.getName())).thenReturn(Optional.empty());
             when(categoryRepository.findByCode(categoryCreateDto.getCode())).thenReturn(Optional.empty());
-            when(categoryMapper.dtoToEntity(categoryCreateDto)).thenReturn(category);
+            when(categoryMapper.toCategory(categoryCreateDto)).thenReturn(category);
             when(categoryRepository.save(any(Category.class))).thenReturn(category);
-            when(categoryMapper.entityToDto(category)).thenReturn(categoryResponseDto);
+            when(categoryMapper.toCategoryResponseDto(category)).thenReturn(categoryResponseDto);
 
             // then
             CategoryResponseDto result = categoryService.createCategory(categoryCreateDto);
@@ -71,11 +71,11 @@ class CategoryServiceImplTest {
         }
 
         @Test
-        void whenGetAllCategories_thenGetCategories_returnAllCategories() {
+        void testGetAllCategories_thenGetCategories_returnAllCategories() {
             // when
             List<Category> categories = Collections.singletonList(category);
             when(categoryRepository.findAll()).thenReturn(categories);
-            when(categoryMapper.entityToDto(category)).thenReturn(categoryResponseDto);
+            when(categoryMapper.toCategoryResponseDto(category)).thenReturn(categoryResponseDto);
 
             // then
             List<CategoryResponseDto> result = categoryService.getAllCategories();
@@ -89,7 +89,7 @@ class CategoryServiceImplTest {
     @Nested
     class UnHappyCase {
         @Test
-        void whenCreateNewCategoryWithNameExisted_thenCreateCategory_returnCreateException() {
+        void testCreateNewCategoryWithNameExisted_thenCreateCategory_returnCreateException() {
             // when
             when(categoryRepository.findByName(categoryCreateDto.getName())).thenReturn(Optional.of(category));
 
@@ -100,7 +100,7 @@ class CategoryServiceImplTest {
         }
 
         @Test
-        void whenCreateNewCategoryWithPrefixExisted_thenCreateCategory_returnCreateException() {
+        void testCreateNewCategoryWithPrefixExisted_thenCreateCategory_returnCreateException() {
             // when
             when(categoryRepository.findByName(categoryCreateDto.getName())).thenReturn(Optional.empty());
             when(categoryRepository.findByCode(categoryCreateDto.getCode())).thenReturn(Optional.of(category));

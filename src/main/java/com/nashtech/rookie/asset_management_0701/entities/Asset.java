@@ -3,6 +3,7 @@ package com.nashtech.rookie.asset_management_0701.entities;
 import java.time.LocalDateTime;
 
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,8 +18,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-
 @Entity
 @Getter
 @Setter
@@ -32,12 +31,14 @@ public class Asset extends AuditEntity<String> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
     private String name;
 
+    @Column(length = 1024)
     private String specification;
 
+    @Column(length = 8)
     private String assetCode;
-
     private LocalDateTime installDate;
 
     @Enumerated(EnumType.STRING)

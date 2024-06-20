@@ -14,7 +14,7 @@ public class EAssetStateDeserializer extends JsonDeserializer<EAssetState> {
     public EAssetState deserialize (JsonParser p, DeserializationContext ctxt) throws IOException {
         String value = p.getText();
         return Arrays.stream(EAssetState.values())
-                .filter(enumValue -> enumValue.name().equals(value))
+                .filter(enumValue -> enumValue.name().equalsIgnoreCase(value))
                 .findFirst()
                 .orElse(EAssetState.RECYCLED);
     }

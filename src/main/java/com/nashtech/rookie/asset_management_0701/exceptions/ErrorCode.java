@@ -44,9 +44,13 @@ public enum ErrorCode {
     PASSWORD_SAME(1113, "The new password must be different from the current password", HttpStatus.BAD_REQUEST),
 
     // Category
-    CATEGORY_NAME_ALREADY_EXISTED(1201, "Category name is already existed", HttpStatus.BAD_REQUEST),
-    CATEGORY_PREFIX_ALREADY_EXISTED(1202, "Category prefix is already existed", HttpStatus.BAD_REQUEST),
+    CATEGORY_NAME_ALREADY_EXISTED(1201, "Category is already existed. Please enter a different category"
+            , HttpStatus.BAD_REQUEST),
+    CATEGORY_PREFIX_ALREADY_EXISTED(1202, "Prefix is already existed. Please enter a different prefix"
+            , HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(1203, "Category not found", HttpStatus.NOT_FOUND),
+    // Asset
+    ASSET_INSTALLED_DATE_TOO_OLD(1301, "Asset installed date is no longer than 3 months ago", HttpStatus.BAD_REQUEST),
 
     // constraint violation
     INVALID_PASSWORD(2001, "Password must be at least 8 characters and contains at least 1 uppercase, " +

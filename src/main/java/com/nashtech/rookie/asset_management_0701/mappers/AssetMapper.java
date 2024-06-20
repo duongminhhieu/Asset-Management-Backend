@@ -10,8 +10,11 @@ import com.nashtech.rookie.asset_management_0701.entities.Asset;
 @Mapper(componentModel = "spring")
 public interface AssetMapper {
     @Mapping(source = "category.name", target = "category")
-    AssetResponseDto entityToDto (Asset asset);
+    AssetResponseDto toAssetResponseDto (Asset asset);
 
     @Mapping(target = "category", ignore = true)
-    Asset dtoToEntity (AssetCreateDto assetCreateDto);
+    @Mapping(target = "assetCode", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "location", ignore = true)
+    Asset toAsset (AssetCreateDto assetCreateDto);
 }

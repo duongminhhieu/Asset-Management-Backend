@@ -1,6 +1,7 @@
 package com.nashtech.rookie.asset_management_0701.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,15 +14,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
+import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.asset.AssetCreateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.asset.AssetResponseDto;
@@ -34,8 +34,8 @@ import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.mappers.AssetMapper;
 import com.nashtech.rookie.asset_management_0701.repositories.AssetRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.CategoryRepository;
-import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.services.asset.AssetServiceImpl;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 class AssetServiceImplTest {
@@ -50,13 +50,7 @@ class AssetServiceImplTest {
     private CategoryRepository categoryRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private Authentication authentication;
-
-    @Mock
-    private SecurityContext securityContext;
+    private AuthUtil authUtil;
 
     @InjectMocks
     private AssetServiceImpl assetService;
@@ -105,37 +99,33 @@ class AssetServiceImplTest {
     @Nested
     class HappyCase {
         @Test
-        void givenAssetCreateDto_whenCreateAsset_returnCreateOk() {
-            // Mock SecurityContextHolder
-            SecurityContextHolder.setContext(securityContext);
-            given(securityContext.getAuthentication()).willReturn(authentication);
-            given(authentication.getName()).willReturn("username");
-
+        @WithMockUser(username = "username", roles = "ADMIN")
+        void testAssetCreateDto_whenCreateAsset_returnCreateOk() {
             // Given
-            given(userRepository.findByUsername(anyString())).willReturn(Optional.of(user));
+            given(authUtil.getCurrentUser()).willReturn(user);
             given(categoryRepository.findByName(anyString())).willReturn(Optional.of(category));
-            given(assetMapper.dtoToEntity(any(AssetCreateDto.class))).willReturn(asset);
+            given(assetMapper.toAsset(any(AssetCreateDto.class))).willReturn(asset);
             given(assetRepository.countByAssetCodeStartingWith(anyString())).willReturn(0L);
             given(assetRepository.save(any(Asset.class))).willReturn(asset);
-            given(assetMapper.entityToDto(any(Asset.class))).willReturn(assetResponseDto);
+            given(assetMapper.toAssetResponseDto(any(Asset.class))).willReturn(assetResponseDto);
 
             // When
             AssetResponseDto result = assetService.createAsset(assetCreateDto);
 
             // Then
-            verify(userRepository).findByUsername("username");
+            verify(authUtil).getCurrentUser();
             verify(categoryRepository).findByName("Laptop");
             verify(assetRepository).save(asset);
             assertEquals(assetResponseDto, result);
         }
 
         @Test
-        void whenGetAllAssets_returnAllAssets() {
+        void testGetAllAssets_returnAllAssets() {
             // Given
             List<Asset> assets = Collections.singletonList(asset);
             List<AssetResponseDto> assetResponseDtoList = Collections.singletonList(assetResponseDto);
             given(assetRepository.findAll()).willReturn(assets);
-            given(assetMapper.entityToDto(asset)).willReturn(assetResponseDto);
+            given(assetMapper.toAssetResponseDto(asset)).willReturn(assetResponseDto);
 
             // When
             List<AssetResponseDto> result = assetService.getAllAssets();
@@ -148,45 +138,32 @@ class AssetServiceImplTest {
 
     @Nested
     class UnHappyCase {
-
         @Test
-        void givenAssetCreateDtoWithUserNotFound_whenCreateAsset_returnException() {
-            // Mock SecurityContextHolder
-            SecurityContextHolder.setContext(securityContext);
-            given(securityContext.getAuthentication()).willReturn(authentication);
-            given(authentication.getName()).willReturn("username");
-
+        @WithMockUser(username = "username", roles = "ADMIN")
+        void testAssetCreateDtoWithCategoryNotExisted_whenCreateAsset_returnException() {
             // Given
-            given(userRepository.findByUsername(anyString())).willReturn(Optional.empty());
-
-            // When
-            assertThrows(AppException.class, () -> {
-                assetService.createAsset(assetCreateDto);
-            });
-
-            // Then
-            verify(userRepository).findByUsername("username");
-        }
-
-        @Test
-        void givenAssetCreateDtoWithCategoryNotExisted_whenCreateAsset_returnException() {
-            // Mock SecurityContextHolder
-            SecurityContextHolder.setContext(securityContext);
-            given(securityContext.getAuthentication()).willReturn(authentication);
-            given(authentication.getName()).willReturn("username");
-
-            // Given
-            given(userRepository.findByUsername(anyString())).willReturn(Optional.of(user));
             given(categoryRepository.findByName(anyString())).willReturn(Optional.empty());
 
             // When
-            assertThrows(AppException.class, () -> {
-                assetService.createAsset(assetCreateDto);
-            });
+            assertThrows(AppException.class, () -> assetService.createAsset(assetCreateDto));
 
             // Then
-            verify(userRepository).findByUsername("username");
             verify(categoryRepository).findByName("Laptop");
+        }
+
+        @Test
+        @WithMockUser(username = "username", roles = "ADMIN")
+        void testAssetCreateDtoWithInstallOld_whenCreateAsset_returnException() {
+            // Given
+            assetCreateDto.setInstallDate(LocalDateTime.now().minusMonths(4));
+
+            given(authUtil.getCurrentUser()).willReturn(user);
+            given(categoryRepository.findByName(anyString())).willReturn(Optional.of(category));
+
+            // When
+            assertThatThrownBy(() -> assetService.createAsset(assetCreateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasMessageContaining(ErrorCode.ASSET_INSTALLED_DATE_TOO_OLD.getMessage());
         }
     }
 }

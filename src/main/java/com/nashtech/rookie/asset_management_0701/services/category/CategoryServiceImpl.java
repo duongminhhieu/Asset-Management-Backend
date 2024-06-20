@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
@@ -32,16 +33,16 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AppException(ErrorCode.CATEGORY_PREFIX_ALREADY_EXISTED);
         });
 
-        Category category = categoryMapper.dtoToEntity(categoryCreateDto);
+        Category category = categoryMapper.toCategory(categoryCreateDto);
         categoryRepository.save(category);
 
-        return categoryMapper.entityToDto(category);
+        return categoryMapper.toCategoryResponseDto(category);
     }
 
     @Override
     public List<CategoryResponseDto> getAllCategories () {
         return categoryRepository.findAll().stream()
-                .map(categoryMapper::entityToDto)
+                .map(categoryMapper::toCategoryResponseDto)
                 .toList();
     }
 }
