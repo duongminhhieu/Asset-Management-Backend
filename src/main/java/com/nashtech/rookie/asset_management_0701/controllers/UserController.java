@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.APIResponse;
@@ -20,8 +21,6 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserRespons
 import com.nashtech.rookie.asset_management_0701.services.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -44,8 +43,14 @@ public class UserController {
                 .result(result)
                 .build();
     }
-
     @PatchMapping("/first-change-password")
+    @ResponseStatus(HttpStatus.OK)
+    public APIResponse<String> firstChangePassword (
+            @RequestBody @Valid FirstChangePasswordRequest firstChangePasswordRequest) {
+        userService.firstChangePassword(firstChangePasswordRequest);
+        return APIResponse.<String>builder().message("Change password is success").build();
+    }
+    @PatchMapping("/change-password")
     @ResponseStatus(HttpStatus.OK)
     public APIResponse<String> changePassword (@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
         userService.changePassword(changePasswordRequest);

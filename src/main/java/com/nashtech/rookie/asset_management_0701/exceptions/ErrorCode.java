@@ -20,7 +20,7 @@ public enum ErrorCode {
     EMAIL_OR_PASSWORD_INCORRECT(1006, "Username or password is incorrect", HttpStatus.BAD_REQUEST),
     USER_NOT_ACTIVE(1007, "User is not active", HttpStatus.BAD_REQUEST),
     INVALID_PAGEABLE(1008, "Invalid pageable", HttpStatus.BAD_REQUEST),
-    PASSWORD_NOT_CHANGE(1009, "Password is not change first time", HttpStatus.FORBIDDEN),
+    PASSWORD_NOT_CHANGE(1009, "Password is not change first time", HttpStatus.BAD_REQUEST),
 
 
     // User
@@ -40,6 +40,8 @@ public enum ErrorCode {
     INVALID_ROLE(1109, "Type is required", HttpStatus.BAD_REQUEST),
     ADMIN_NULL_LOCATION(1110, "Type admin must have location", HttpStatus.BAD_REQUEST),
     PASSWORD_CHANGED(1111, "Password is already changed first time", HttpStatus.BAD_REQUEST),
+    WRONG_PASSWORD(1112, "The current password is incorrect", HttpStatus.BAD_REQUEST),
+    PASSWORD_SAME(1113, "The new password must be different from the current password", HttpStatus.BAD_REQUEST),
 
     // Category
     CATEGORY_NAME_ALREADY_EXISTED(1201, "Category name is already existed", HttpStatus.BAD_REQUEST),

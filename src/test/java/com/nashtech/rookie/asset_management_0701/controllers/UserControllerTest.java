@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.List;
 
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
@@ -52,6 +53,7 @@ public class UserControllerTest {
     private UserResponse userResponse;
 
     private PaginationResponse<UserResponse> userListResponse;
+    private FirstChangePasswordRequest firstChangePasswordRequest;
     private ChangePasswordRequest changePasswordRequest;
 
     @BeforeEach
@@ -78,8 +80,12 @@ public class UserControllerTest {
                 .itemsPerPage(20)
                 .data(List.of(userResponse))
                 .build();
-        changePasswordRequest =
-                ChangePasswordRequest.builder().password("Admin@123").build();
+        firstChangePasswordRequest =
+                FirstChangePasswordRequest.builder().password("Admin@123").build();
+        changePasswordRequest = ChangePasswordRequest.builder()
+                .password("Admin@123")
+                .newPassword("Admin@1234")
+                .build();
     }
 
     @Nested
@@ -119,7 +125,7 @@ public class UserControllerTest {
             ResultActions response = mockMvc.perform(patch("/api/v1/users/first-change-password")
                     .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(changePasswordRequest)));
+                    .content(objectMapper.writeValueAsString(firstChangePasswordRequest)));
 
             // Verify response
             response.andDo(print())
@@ -130,7 +136,7 @@ public class UserControllerTest {
 
         @Test
         @WithMockUser(roles = "ADMIN")
-        void testGetAllUsers_whenNotGivenAnyParams_willReturnResponse () throws Exception {
+        void testGetAllUsers_whenNotGivenAnyParams_willReturnResponse() throws Exception {
             // given
             when(userService.getAllUser(any(UserSearchDto.class))).thenReturn(userListResponse);
             // when and then
@@ -143,5 +149,46 @@ public class UserControllerTest {
                     .andExpect(jsonPath("$.result.itemsPerPage").value(20))
                     .andExpect(jsonPath("$.result.data").exists());
         }
+
+        @Test
+        @WithMockUser(roles = "ADMIN", username = "admin")
+        void testChangePassword_validRequest_success() throws Exception {
+            // given
+
+            // when, then
+            ResultActions response = mockMvc.perform(patch("/api/v1/users/change-password")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(changePasswordRequest)));
+
+            // Verify response
+            response.andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("Change password is success"));
+        }
     }
+
+    @Nested
+    class UnHappyCase {
+        @Test
+        @WithMockUser(roles = "ADMIN", username = "admin")
+        void testChangePassword_invalidPassword_fail() throws Exception {
+            // given
+            changePasswordRequest.setPassword("abc");
+            // when, then
+            ResultActions response = mockMvc.perform(patch("/api/v1/users/change-password")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(changePasswordRequest)));
+
+            // Verify response
+            response.andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.internalCode").value(2001))
+                    .andExpect(jsonPath("$.message").value("Password must be at least 8 characters and contains at least 1 uppercase, 1 lowercase, 1 special characters, 1 number"))
+            ;
+        }
+
+    }
+
 }

@@ -8,8 +8,10 @@ import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtilImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +32,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserResponse;
@@ -68,6 +70,7 @@ class UserServiceTest {
     private Location adminLocation;
 
     private User userInDB;
+    private ChangePasswordRequest changePasswordRequest;
 
     @BeforeEach
     void setUp () {
@@ -88,6 +91,11 @@ class UserServiceTest {
         adminUsing.setUsername("abc.com");
         adminUsing.setId(2L);
         adminUsing.setLocation(adminLocation);
+
+        changePasswordRequest = ChangePasswordRequest.builder()
+                .password("Admin@123")
+                .newPassword("Admin@1234")
+                .build();
     }
 
     @Nested
@@ -153,17 +161,33 @@ class UserServiceTest {
         @WithMockUser(username = "test", roles = "ADMIN")
         void testChangePassword_whenValid_shouldReturnUserResponse () {
             // set up
-            var changePasswordRequest = new ChangePasswordRequest("newPassword");
+            var changePasswordRequest = new FirstChangePasswordRequest("newPassword");
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
             when(passwordEncoder.encode("newPassword")).thenReturn("hashedPassword");
             when(userRepository.save(any(User.class))).thenReturn(userInDB);
 
             // run
-            userService.changePassword(changePasswordRequest);
+            userService.firstChangePassword(changePasswordRequest);
 
             // verify
             verify(userRepository, times(1)).save(any(User.class));
         }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testChangePassword_whenValid_shouldReturnSuccess () {
+            // given
+            when(passwordEncoder.matches(any(), any())).thenReturn(true);
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+            when(userRepository.save(any(User.class))).thenReturn(userInDB);
+
+            // when
+            userService.changePassword(changePasswordRequest);
+
+            // then
+            verify(userRepository, times(1)).save(any(User.class));
+        }
+
     }
 
     @Nested
@@ -221,10 +245,44 @@ class UserServiceTest {
 
         @Test
         @WithMockUser(username = "test", roles = "ADMIN")
-        void testChangePassword_whenUserNotFound_shouldThrowAppException () {
+        void testFirstChangePassword_whenUserNotFound_shouldThrowAppException () {
             // set up
-            var changePasswordRequest = new ChangePasswordRequest("newPassword");
+            var changePasswordRequest = new FirstChangePasswordRequest("newPassword");
             when(userRepository.findByUsername("test")).thenReturn(Optional.empty());
+
+            // run
+            var exception = assertThrows(AppException.class, () -> {
+                userService.firstChangePassword(changePasswordRequest);
+            });
+
+            // verify
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testFirstChangePassword_whenUserStatusNotFirstLogin_shouldThrowAppException () {
+            // set up
+            var changePasswordRequest = new FirstChangePasswordRequest("newPassword");
+            userInDB.setStatus(EUserStatus.ACTIVE);
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+
+            // run
+            var exception = assertThrows(AppException.class, () -> {
+                userService.firstChangePassword(changePasswordRequest);
+            });
+
+            // verify
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_CHANGED);
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testChangePassword_whenPasswordSame_shouldThrowAppException () {
+            // set up
+            var changePasswordRequest = new ChangePasswordRequest("newPassword", "newPassword");
+            when(passwordEncoder.matches(any(), any())).thenReturn(true);
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
 
             // run
             var exception = assertThrows(AppException.class, () -> {
@@ -232,7 +290,24 @@ class UserServiceTest {
             });
 
             // verify
-            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_SAME);
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testChangePassword_wrongPassword_shouldThrowAppException () {
+            // set up
+            var changePasswordRequest = new ChangePasswordRequest("password", "newPassword");
+            when(passwordEncoder.matches(any(), any())).thenReturn(false);
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+
+            // run
+            var exception = assertThrows(AppException.class, () -> {
+                userService.changePassword(changePasswordRequest);
+            });
+
+            // verify
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.WRONG_PASSWORD);
         }
     }
 }

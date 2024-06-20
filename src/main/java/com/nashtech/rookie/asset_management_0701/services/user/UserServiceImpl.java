@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
@@ -133,16 +134,31 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void changePassword (ChangePasswordRequest changePasswordRequest) {
+    public void firstChangePassword (FirstChangePasswordRequest firstChangePasswordRequest) {
         User user = authUtil.getCurrentUser();
 
         if (!user.getStatus().equals(EUserStatus.FIRST_LOGIN)){
             throw new AppException(ErrorCode.PASSWORD_CHANGED);
         }
 
-        user.setHashPassword(passwordEncoder.encode(changePasswordRequest.getPassword()));
+        user.setHashPassword(passwordEncoder.encode(firstChangePasswordRequest.getPassword()));
 
         user.setStatus(EUserStatus.ACTIVE);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword (ChangePasswordRequest changePasswordRequest) {
+        if (changePasswordRequest.getNewPassword().equals(changePasswordRequest.getPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_SAME);
+        }
+        User user = authUtil.getCurrentUser();
+        if (!passwordEncoder.matches(changePasswordRequest.getPassword(), user.getHashPassword())) {
+            throw new AppException(ErrorCode.WRONG_PASSWORD);
+        }
+
+        user.setHashPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
         userRepository.save(user);
     }
 }
