@@ -11,13 +11,13 @@ pr:
       - main
 
 variables:
-  azureSubscription: 's'
+  azureSubscription: 'azureSubscription'
   resouceGroupName: 'rookies7'
   imageName: 'assset-backend'
   registryName: 'rookie7reg.azurecr.io'
-  appName: 'asset-be'
+  appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  tag: '0.0.1-dev'
+  tag: '$(Build.BuildId)'
 
 stages:
 - stage: Build
@@ -38,21 +38,16 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
-#       - task: Docker@2
-#         inputs:
-#           containerRegistry: 'RookieReg'
-#           repository: 'test1'
-#           command: 'buildAndPush'
-#           Dockerfile: '**/Dockerfile'
-#       # - task: Docker@2
-#       #   displayName: 'Build and push an image to container registry'
-#       #   inputs:
-#       #     command: buildAndPush
-#       #     repository: $(registryName)/$(imageName)
-#       #     dockerfile: $(dockerfilePath)
-#       #     containerRegistry: 'RookieReg'
-#       #     tags: |
-#       #       $(tag)
+      
+      - task: Docker@2
+        displayName: 'Build and push an image to container registry'
+        inputs:
+          command: buildAndPush
+          repository: $(registryName)/$(imageName)
+          dockerfile: $(dockerfilePath)
+          containerRegistry: 'RookieReg'
+          tags: |
+            $(tag)
 
 # - stage: Deploy
 #   displayName: Deploy 
@@ -65,18 +60,18 @@ stages:
 #       - task: AzureCLI@2
 #         displayName: 'set env'
 #         inputs:
-#           azureSubscription: $(azureSubscription)
+#           azureSubscription: 'Visual Studio Enterprise Subscription – MPN(86b7e5ed-c9e5-41a2-a581-7447b9743234)'
 #           scriptType: 'bash'
 #           scriptLocation: 'inlineScript'
 #           inlineScript: |
 #             db_url=$(DB_URL)
 #             db_username=$(DB_USERNAME)
 #             db_password=$(DB_PASSWORD)
-
-#             az webapp config appsettings set --resource-group $(resourceGroupName) --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password 
+            
+#             az webapp config appsettings set --resource-group 'rookies7' --name $(appName) --settings DB_URL=$db_url --settings DB_USERNAME=$db_username --settings DB_PASSWORD=$db_password
 #       - task: AzureWebAppContainer@1
 #         displayName: 'Azure Web App on Container Deploy'
 #         inputs:
-#           azureSubscription: $(azureSubscription)
-#           appName: $(appName)
-#           containers: $(registryName)/$(imageName):$(tag)
+#           azureSubscription: 'Visual Studio Enterprise Subscription – MPN(86b7e5ed-c9e5-41a2-a581-7447b9743234)'
+#           appName: '$(appName)'
+#           containers: '$(registryName)/$(imageName):$(tag)'
