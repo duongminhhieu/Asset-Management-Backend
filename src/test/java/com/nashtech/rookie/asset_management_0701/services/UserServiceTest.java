@@ -29,6 +29,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -126,12 +128,12 @@ class UserServiceTest {
 
         @ParameterizedTest
         @CsvSource({
-            "null, null, 'firstName', 'DESC', 1, 20",
+            "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
             "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
-            "' ', ' ', 'firstName', 'DESC', 1, 20"
+            "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
         })
         @WithMockUser(username = "abc.com", roles = "ADMIN")
-        void testGetAllUse_whenPassInEmpty_shouldReturnCorrectFormat(
+        void testGetAllUse_whenPassInValid_shouldReturnCorrectFormat (
                 String searchString, String type, String sortBy, String sortDir, Integer pageNumber, Integer pageSize) {
             log.info("searchString:" + searchString);
             log.info("type:" + type);
@@ -210,7 +212,7 @@ class UserServiceTest {
 
         @Test
         @WithMockUser(roles = "ADMIN", username = "adminName")
-        void testCreateUserJoinDateWeekend() {
+        void testCreateUserJoinDateWeekend () {
             // Given
             UserRequest userRequest = new UserRequest();
             userRequest.setFirstName("Duy");
@@ -226,12 +228,41 @@ class UserServiceTest {
 
         @Test
         @WithMockUser(username = "abc.com", roles = "ADMIN")
-        void testGetAllUse_whenPageNumberIs0_shouldThrowAppExcpetionWithErrorCodeBadPageable() {
+        void testGetAllUse_whenPageNumberIs0_shouldThrowAppExcpetionWithErrorCodeBadPageable () {
             // set up
             var searchDto = new UserSearchDto("first", "ADMIN", "firstName", "DESC", 0, 20);
             var pageRequest = PageRequest.of(0, 20);
             var resultPage = new PageImpl<>(List.of(userInDB), pageRequest, 1);
             when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(resultPage);
+            
+            when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));
+
+            // run
+            var exception = assertThrows(AppException.class, () -> {
+                userService.getAllUser(searchDto);
+            });
+
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAGEABLE);
+        }
+
+        @Test
+        @WithMockUser(username = "abc.com", roles = "ADMIN")
+        void testGetAllUse_whenSortbyDoesNotSupport_shouldReturnUsingDefault () {
+            // set up
+            var searchDto = new UserSearchDto("first", "ADMIN", "A", "DESC", 0, 20);
+            var pageRequest = PageRequest.of(0, 20);
+            var resultPage = new PageImpl<>(List.of(userInDB), pageRequest, 1);
+            when(userRepository.findAll(any(Specification.class), 
+                    argThat((Pageable page)->{
+                        return !page.getSort().filter((order)->order.getProperty().equals("A")).isEmpty();
+                    })))
+                    .thenThrow(new PropertyReferenceException("A", TypeInformation.of(String.class), List.of()));
+                    
+            when(userRepository.findAll(any(Specification.class), 
+                    argThat((Pageable page)->{
+                        return page.getSort().filter((order)->order.getProperty().equals("A")).isEmpty();
+                    })))
                     .thenReturn(resultPage);
             when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));
 
@@ -242,6 +273,7 @@ class UserServiceTest {
 
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAGEABLE);
         }
+
 
         @Test
         @WithMockUser(username = "test", roles = "ADMIN")

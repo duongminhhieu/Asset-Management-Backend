@@ -4,12 +4,12 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nashtech.rookie.asset_management_0701.constants.DefaultSortOptions;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
@@ -107,29 +107,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public PaginationResponse<UserResponse> getAllUser (UserSearchDto dto) {
         var pageRequest = PageSortUtil.createPageRequest(
-                dto.getPageNumber() - 1,
-                dto.getPageSize(),
-                dto.getOrderBy(),
-                PageSortUtil.parseSortDirection(dto.getSortDir()));
+                    dto.getPageNumber() - 1,
+                    dto.getPageSize(),
+                    dto.getOrderBy().equals("type")?"role":dto.getOrderBy(),
+                    PageSortUtil.parseSortDirection(dto.getSortDir()),
+                    DefaultSortOptions.DEFAULT_USER_SORT_BY);
 
         var searchString = dto.getSearchString();
         var currentUser = authUtil.getCurrentUser();
         var currentLocation = currentUser.getLocation();
 
-        Page<User> users = userRepository.findAll(
-                Specification.where(UserSpecification.hasNameContains(searchString))
-                        .or(UserSpecification.hasStaffCodeContains(searchString))
-                        .and(UserSpecification.hasRole(dto.getType()))
-                        .and(UserSpecification.hasLocation(currentLocation))
-                        .and(UserSpecification.excludeUser(currentUser)),
-                pageRequest);
+        var users = userRepository.findAll(
+                        Specification.where(UserSpecification.hasNameContains(searchString))
+                                .or(UserSpecification.hasStaffCodeContains(searchString))
+                                .and(UserSpecification.hasRole(dto.getType()))
+                                .and(UserSpecification.hasLocation(currentLocation))
+                                .and(UserSpecification.excludeUser(currentUser)),
+                        pageRequest);
 
         return PaginationResponse.<UserResponse>builder()
-                .page(pageRequest.getPageNumber() + 1)
-                .total(users.getTotalElements())
-                .itemsPerPage(pageRequest.getPageSize())
-                .data(users.map(userMapper::toUserResponse).toList())
-                .build();
+                    .page(pageRequest.getPageNumber() + 1)
+                    .total(users.getTotalElements())
+                    .itemsPerPage(pageRequest.getPageSize())
+                    .data(users.map(userMapper::toUserResponse).toList())
+                    .build();
     }
 
     @Override

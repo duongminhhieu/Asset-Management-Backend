@@ -22,10 +22,7 @@ import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.services.auth.AuthenticationServiceImpl;
 
-import lombok.extern.slf4j.Slf4j;
-
 @SpringBootTest
-@Slf4j
 public class AuthenticationServiceTest {
 
     @Autowired
@@ -58,7 +55,7 @@ public class AuthenticationServiceTest {
     @Nested
     class HappyCase {
         @Test
-        void login_validRequest_success() {
+        void login_validRequest_success () {
             // Given
             when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("123456", user.getHashPassword())).thenReturn(true);

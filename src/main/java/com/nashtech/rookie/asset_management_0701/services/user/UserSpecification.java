@@ -2,9 +2,12 @@ package com.nashtech.rookie.asset_management_0701.services.user;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import com.nashtech.rookie.asset_management_0701.constants.DefaultSortOptions;
 import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
-import jakarta.persistence.criteria.JoinType;
+import com.nashtech.rookie.asset_management_0701.enums.ERole;
+import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
+import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 
 public final class UserSpecification {
     private UserSpecification () {
@@ -16,7 +19,8 @@ public final class UserSpecification {
         }
         String lowerCaseName = name.trim().toLowerCase();
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + lowerCaseName + "%");
+                criteriaBuilder.like(criteriaBuilder.lower(
+                    criteriaBuilder.concat(root.get("firstName"), root.get("lastName"))), "%" + lowerCaseName + "%");
     }
 
     public static Specification<User> hasStaffCodeContains (String staffCode) {
@@ -34,9 +38,17 @@ public final class UserSpecification {
         }
 
         String upperCaseRole = role.trim().toUpperCase();
+        if (!DefaultSortOptions.SYSTEM_ROLE.contains(upperCaseRole)){
+            throw new AppException(ErrorCode.ROLE_NOT_AVAILABLE);
+        }
+
+        if (upperCaseRole.equals("STAFF")) {
+            upperCaseRole = "USER";
+        }
+
+        ERole eRole = ERole.valueOf(upperCaseRole);
         return (root, query, criteriaBuilder) -> {
-            var userRole = root.join("role", JoinType.INNER);
-            return criteriaBuilder.like(userRole.get("role").get("name"), upperCaseRole);
+            return criteriaBuilder.equal(root.get("role"), eRole);
         };
     }
 

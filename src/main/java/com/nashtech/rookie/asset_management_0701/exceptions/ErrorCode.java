@@ -56,9 +56,12 @@ public enum ErrorCode {
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
         "contains at least 1 uppercase, " +
         "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),
+    PAGE_SIZE_LESS_THAN_ONE(2002, "Page size must be larger than 0", HttpStatus.BAD_REQUEST),
+    PAGE_NUMBER_LESS_THAN_ONE(2003, "Page numbermust be larger than 0", HttpStatus.BAD_REQUEST),
     INVALID_CATEGORY_CODE(2202, "Category must be {min} characters", HttpStatus.BAD_REQUEST),
     FIELD_NOT_EMPTY(2003, "\"{field}\" must not be empty", HttpStatus.BAD_REQUEST),
     FIELD_NOT_NULL(2004, "\"{field}\" must not be null", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_AVAILABLE(2100, "This is not a type of user for this system", HttpStatus.BAD_REQUEST),
     STATE_NOT_AVAILABLE(2205, "Status must be any of AVAILABLE, NOT_AVAILABLE", HttpStatus.BAD_REQUEST);
 
     private final int internalCode;

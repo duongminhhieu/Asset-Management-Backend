@@ -62,7 +62,7 @@ class AssetServiceImplTest {
     private Category category;
 
     @BeforeEach
-    void setUp() {
+    void setUp () {
         assetCreateDto = AssetCreateDto.builder()
                 .name("Asset1")
                 .category("Laptop")
