@@ -11,7 +11,7 @@ public class PasswordValidator implements ConstraintValidator<PasswordConstraint
 
     @Override
     public boolean isValid (String password, jakarta.validation.ConstraintValidatorContext constraintValidatorContext) {
-        String regex = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$";
+        String regex = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,128}$";
 
         return password.matches(regex);
     }

@@ -53,7 +53,8 @@ public enum ErrorCode {
     ASSET_INSTALLED_DATE_TOO_OLD(1301, "Asset installed date is no longer than 3 months ago", HttpStatus.BAD_REQUEST),
 
     // constraint violation
-    INVALID_PASSWORD(2001, "Password must be at least 8 characters and contains at least 1 uppercase, " +
+    INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
+        "contains at least 1 uppercase, " +
         "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),
     INVALID_CATEGORY_CODE(2202, "Category must be {min} characters", HttpStatus.BAD_REQUEST),
     FIELD_NOT_EMPTY(2003, "\"{field}\" must not be empty", HttpStatus.BAD_REQUEST),

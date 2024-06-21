@@ -185,7 +185,8 @@ public class UserControllerTest {
             response.andDo(print())
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.internalCode").value(2001))
-                    .andExpect(jsonPath("$.message").value("Password must be at least 8 characters and contains at least 1 uppercase, 1 lowercase, 1 special characters, 1 number"))
+                    .andExpect(jsonPath("$.message").value("Password must be at least 8 characters less than 128 characters" +
+                        " contains at least 1 uppercase, 1 lowercase, 1 special characters, 1 number"))
             ;
         }
 
