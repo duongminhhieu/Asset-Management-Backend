@@ -16,4 +16,5 @@ import lombok.Setter;
 public class LocationResponse {
     private Long id;
     private String name;
+    private String code;
 }

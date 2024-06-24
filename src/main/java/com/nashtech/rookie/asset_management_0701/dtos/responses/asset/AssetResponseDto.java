@@ -1,8 +1,8 @@
 package com.nashtech.rookie.asset_management_0701.dtos.responses.asset;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
-import com.nashtech.rookie.asset_management_0701.entities.Location;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.location.LocationResponse;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,8 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-
 @Data
 @Builder
 @AllArgsConstructor
@@ -22,15 +20,20 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AssetResponseDto {
+    private String id;
 
     private String name;
+
     private String specification;
+
     private String assetCode;
-    private LocalDateTime installDate;
+
+    private LocalDate installDate;
 
     @Enumerated(EnumType.STRING)
     private EAssetState state;
 
-    private Location location;
+    private LocationResponse location;
+
     private String category;
 }

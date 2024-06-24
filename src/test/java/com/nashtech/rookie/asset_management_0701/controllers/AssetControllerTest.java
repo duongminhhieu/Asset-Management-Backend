@@ -4,16 +4,17 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Collections;
-import java.util.List;
 
+import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.requests.asset.AssetCreate
 import com.nashtech.rookie.asset_management_0701.dtos.responses.asset.AssetResponseDto;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.services.asset.AssetService;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -47,10 +49,11 @@ class AssetControllerTest {
 
     private AssetCreateDto assetCreateDto;
     private AssetResponseDto assetResponseDto;
+    private PaginationResponse<AssetResponseDto> assetPagination;
 
     @BeforeEach
     void setUp() {
-        LocalDateTime localDateTime = LocalDateTime.now();
+        LocalDate localDateTime = LocalDate.now();
 
         assetCreateDto = AssetCreateDto.builder()
                 .name("Asset1")
@@ -67,6 +70,10 @@ class AssetControllerTest {
                 .installDate(localDateTime)
                 .state(EAssetState.AVAILABLE)
                 .assetCode("LP0001")
+                .build();
+
+        assetPagination = PaginationResponse.<AssetResponseDto>builder()
+                .data(Collections.singletonList(assetResponseDto))
                 .build();
     }
 
@@ -97,21 +104,23 @@ class AssetControllerTest {
 
         @Test
         @WithMockUser(roles = "ADMIN")
-        void whenGetAllAssets_thenReturnAssetList() throws Exception {
-            // Mock behavior
-            List<AssetResponseDto> assetResponseDtoList = Collections.singletonList(assetResponseDto);
-            given(assetService.getAllAssets()).willReturn(assetResponseDtoList);
+        void getAllAsset_validRequest_returnAssetPagination() throws Exception {
+            // GIVEN
+            when(assetService.getAllAssets(any())).thenReturn(assetPagination);
 
-            // Perform GET request
-            ResultActions response =
-                    mockMvc.perform(get("/api/v1/assets").with(csrf()).contentType(MediaType.APPLICATION_JSON));
-
-            // Verify response
-            response.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.result", hasSize(1)))
-                    .andExpect(jsonPath("$.result[0].name", is(assetResponseDto.getName())))
-                    .andExpect(jsonPath("$.result[0].category", is(assetResponseDto.getCategory())))
-                    .andExpect(jsonPath("$.result[0].assetCode", is(assetResponseDto.getAssetCode())));
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assets")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .param("searchString", "")
+                            .param("states", "AVAILABLE")
+                            .param("categoryIds", "1")
+                            .param("orderBy", "name")
+                            .param("sortDir", "ASC")
+                            .param("pageSize", "10")
+                            .param("pageNumber", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.data", hasSize(1)))
+                    .andExpect(jsonPath("$.result.data[0].name", is(assetResponseDto.getName())));
         }
     }
 

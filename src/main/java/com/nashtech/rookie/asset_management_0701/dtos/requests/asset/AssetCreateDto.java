@@ -1,6 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.dtos.requests.asset;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
@@ -36,7 +36,7 @@ public class AssetCreateDto {
     String specification;
 
     @FieldNotNullConstraint(field = "name", message = "FIELD_NOT_NULL")
-    LocalDateTime installDate;
+    LocalDate installDate;
 
     @FieldNotNullConstraint(field = "state", message = "FIELD_NOT_NULL")
     @EAssetStateSubset(

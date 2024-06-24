@@ -14,6 +14,9 @@ import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 public final class PageSortUtil {
     private PageSortUtil () {
     }
+    public static Pageable createPageRequest (Integer pageNumber, Integer pageSize, Sort sort) {
+        return PageRequest.of(pageNumber - 1, pageSize > 100 ? 100 : pageSize, sort);
+    }
 
     public static Pageable createPageRequest (Integer pageNumber, Integer pageSize, String sortBy,
                                               Sort.Direction sortDirection, String defaulSortBy) {
@@ -40,7 +43,16 @@ public final class PageSortUtil {
             return Sort.Direction.fromString(sortDirection);
         }
         catch (IllegalArgumentException e) {
-            throw new AppException(ErrorCode.INVALID_PAGEABLE);
+            throw new AppException(ErrorCode.INVALID_SORT_DIR);
+        }
+    }
+    public static int parsePageValue (String value, int defaultValue) {
+        try {
+            int parsedValue = Integer.parseInt(value);
+            return Math.max(parsedValue, 1);
+        }
+        catch (NumberFormatException e) {
+            return defaultValue;
         }
     }
 }

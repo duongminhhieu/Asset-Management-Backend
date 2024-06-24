@@ -1,6 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.entities;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import jakarta.persistence.Column;
@@ -39,7 +39,8 @@ public class Asset extends AuditEntity<String> {
 
     @Column(length = 8)
     private String assetCode;
-    private LocalDateTime installDate;
+
+    private LocalDate installDate;
 
     @Enumerated(EnumType.STRING)
     private EAssetState state;
