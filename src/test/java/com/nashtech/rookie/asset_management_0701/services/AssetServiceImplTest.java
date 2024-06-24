@@ -168,6 +168,19 @@ class AssetServiceImplTest {
             assertThat(actualResponse.getData()).hasSize(1);
 
         }
+
+        @Test
+        void testGetAssetById_validRequest_returnAsset() {
+            // Given
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(assetMapper.toAssetResponseDto(asset)).willReturn(assetResponseDto);
+
+            // When
+            AssetResponseDto result = assetService.getAssetById(1L);
+
+            // Then
+            assertEquals(assetResponseDto, result);
+        }
     }
 
     @Nested
@@ -216,6 +229,18 @@ class AssetServiceImplTest {
             // Then
             verify(categoryRepository).findAllById(assetFilter.getCategoryIds());
 
+        }
+
+        @Test
+        void testGetAssetById_invalidId_returnException() {
+            // Given
+            given(assetRepository.findById(1L)).willReturn(Optional.empty());
+
+            // When
+            assertThrows(AppException.class, () -> assetService.getAssetById(1L));
+
+            // Then
+            verify(assetRepository).findById(1L);
         }
     }
 }

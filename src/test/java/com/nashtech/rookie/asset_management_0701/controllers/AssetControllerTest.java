@@ -122,6 +122,19 @@ class AssetControllerTest {
                     .andExpect(jsonPath("$.result.data", hasSize(1)))
                     .andExpect(jsonPath("$.result.data[0].name", is(assetResponseDto.getName())));
         }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void getAssetById_validRequest_returnAsset() throws Exception {
+            // GIVEN
+            when(assetService.getAssetById(any())).thenReturn(assetResponseDto);
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assets/{id}", 1)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.name", is(assetResponseDto.getName())));
+        }
     }
 
     @Nested
