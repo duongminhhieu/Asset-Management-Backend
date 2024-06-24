@@ -2,18 +2,19 @@ package com.nashtech.rookie.asset_management_0701.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
-import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtilImpl;
+import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
+import com.nashtech.rookie.asset_management_0701.utils.user.UserUtilImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -44,19 +45,20 @@ import com.nashtech.rookie.asset_management_0701.enums.EGender;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
-import com.nashtech.rookie.asset_management_0701.mappers.LocationMapperImpl;
 import com.nashtech.rookie.asset_management_0701.mappers.UserMapper;
-import com.nashtech.rookie.asset_management_0701.mappers.UserMapperImpl;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.services.user.UserServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = {UserMapperImpl.class, UserServiceImpl.class, LocationMapperImpl.class, AuthUtilImpl.class})
+@SpringBootTest
 @Slf4j
 class UserServiceTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private LocationRepository locationRepository;
 
     @Autowired
     private UserMapper userMapper;
@@ -66,6 +68,9 @@ class UserServiceTest {
 
     @Autowired
     private UserServiceImpl userService;
+
+    @Autowired
+    private UserUtilImpl userUtil;
 
     private User adminUsing;
 
@@ -82,10 +87,12 @@ class UserServiceTest {
         userInDB.setId(1L);
         userInDB.setStatus(EUserStatus.FIRST_LOGIN);
         userInDB.setGender(EGender.FEMALE);
+        userInDB.setStaffCode("SD0001");
 
         adminLocation = new Location();
         adminLocation.setId(1L);
         adminLocation.setName("location");
+        adminLocation.setCode("LCT");
 
         adminUsing = new User();
         adminUsing.setFirstName("admin");
@@ -102,10 +109,9 @@ class UserServiceTest {
 
     @Nested
     class HappyCase {
-
         @Test
         @WithMockUser(roles = "ADMIN", username = "adminName")
-        void testCreateUser_validUser_shouldReturnUserResponse() {
+        void testCreateUserByAdminRole_validUser_shouldReturnUserResponse() {
             // Setup mocks
             UserRequest userRequest = new UserRequest();
             userRequest.setFirstName("Duy");
@@ -114,16 +120,58 @@ class UserServiceTest {
             userRequest.setJoinDate(LocalDate.of(2024, 6, 3));
             userRequest.setRole(ERole.ADMIN);
             userRequest.setLocationId(1L);
-            when(userRepository.count()).thenReturn(1L);
             when(userRepository.save(any())).thenReturn(userInDB);
             when(userRepository.findByUsername("adminName")).thenReturn(Optional.of(new User()));
+            when(locationRepository.findById(any())).thenReturn(Optional.of(new Location()));
             when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
 
             // Run the method
             UserResponse result = userService.createUser(userRequest);
 
             // Assertions
-            assertEquals("SD0001", result.getStaffCode());
+            assertEquals(userRequest.getFirstName(), result.getFirstName());
+            assertEquals(userRequest.getLastName(), result.getLastName());
+            assertEquals(userRequest.getDob(), result.getDob());
+            assertEquals(userRequest.getJoinDate(), result.getJoinDate());
+        }
+
+        @Test
+        @WithMockUser(roles = "USER", username = "adminName")
+        void testCreateUserByUserRole_validUser_shouldReturnUserResponse() {
+            // Setup mocks
+            UserRequest userRequest = new UserRequest();
+            userRequest.setFirstName("Duy");
+            userRequest.setLastName("Nguyen Hoang");
+            userRequest.setDob(LocalDate.of(1990, 1, 1));
+            userRequest.setJoinDate(LocalDate.of(2024, 6, 3));
+            userRequest.setRole(ERole.USER);
+
+            when(userRepository.findByUsername("adminName")).thenReturn(Optional.of(adminUsing));
+            when(userRepository.save(any())).thenReturn(userInDB);
+            when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
+
+            // Run the method
+            UserResponse result = userService.createUser(userRequest);
+
+            // Assertions
+            assertEquals(userRequest.getFirstName(), result.getFirstName());
+            assertEquals(userRequest.getLastName(), result.getLastName());
+            assertEquals(userRequest.getDob(), result.getDob());
+            assertEquals(userRequest.getJoinDate(), result.getJoinDate());
+        }
+
+        @Test
+        void testGenerateUsername_shouldReturnCorrectFormat() {
+            // Given
+            String firstName = "Duy";
+            String lastName = "Nguyen";
+            String expectedUsername = "duyn"; // Adjust based on your expected format
+
+            // When
+            String generatedUsername = userService.generateUsername(firstName, lastName);
+
+            // Then
+            assertEquals(expectedUsername, generatedUsername);
         }
 
         @ParameterizedTest
@@ -135,8 +183,8 @@ class UserServiceTest {
         @WithMockUser(username = "abc.com", roles = "ADMIN")
         void testGetAllUse_whenPassInValid_shouldReturnCorrectFormat (
                 String searchString, String type, String sortBy, String sortDir, Integer pageNumber, Integer pageSize) {
-            log.info("searchString:" + searchString);
-            log.info("type:" + type);
+            log.info("searchString:{}", searchString);
+            log.info("type:{}", type);
 
             // set up
             var searchDto = new UserSearchDto(searchString, type, sortBy, sortDir, pageNumber, pageSize);
@@ -224,6 +272,23 @@ class UserServiceTest {
             AppException exception = assertThrows(AppException.class, () -> userService.createUser(userRequest));
 
             assertEquals(ErrorCode.JOIN_DATE_WEEKEND, exception.getErrorCode());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN", username = "adminUser")
+        void testCreateUserAdminWithoutLocationId_shouldThrowAppException() {
+            // Setup mocks
+            UserRequest userRequest = new UserRequest();
+            userRequest.setFirstName("Admin");
+            userRequest.setLastName("User");
+            userRequest.setDob(LocalDate.of(1980, 1, 1));
+            userRequest.setJoinDate(LocalDate.of(2023, 6, 30));
+            userRequest.setRole(ERole.ADMIN);
+            userRequest.setLocationId(null); // Simulate missing locationId
+
+            // Run and assert
+            AppException exception = assertThrows(AppException.class, () -> userService.createUser(userRequest));
+            assertEquals(ErrorCode.ADMIN_NULL_LOCATION, exception.getErrorCode());
         }
 
         @Test

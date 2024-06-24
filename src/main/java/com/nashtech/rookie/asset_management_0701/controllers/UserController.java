@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +34,14 @@ public class UserController {
     public APIResponse<UserResponse> createUser (@RequestBody @Valid UserRequest userRequest) {
         UserResponse userResponse = userService.createUser(userRequest);
         return APIResponse.<UserResponse>builder().result(userResponse).build();
+    }
+
+    @GetMapping("/generate-username")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<String> getUsernameGenerated (@RequestParam("firstName") String firstName,
+                                                     @RequestParam("lastName") String lastName) {
+        var result = userService.generateUsername(firstName, lastName);
+        return APIResponse.<String>builder().result(result).build();
     }
 
     @GetMapping

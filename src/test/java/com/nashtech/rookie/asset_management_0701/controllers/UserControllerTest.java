@@ -1,6 +1,7 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -113,6 +114,30 @@ public class UserControllerTest {
                             .value(userResponse.getGender().toString()))
                     .andExpect(jsonPath("$.result.joinDate")
                             .value(userResponse.getJoinDate().toString()));
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void givenFirstNameAndLastName_whenGetUsernameGenerated_thenReturnGeneratedUsername() throws Exception {
+            // Given
+            String firstName = "Duy";
+            String lastName = "Nguyen Hoang";
+            String generatedUsername = "duynh";
+
+            // Mock behavior of userService
+            given(userService.generateUsername(anyString(), anyString())).willReturn(generatedUsername);
+
+            // Call the controller method
+            ResultActions response = mockMvc.perform(get("/api/v1/users/generate-username")
+                    .with(csrf())
+                    .param("firstName", firstName)
+                    .param("lastName", lastName)
+                    .contentType(MediaType.APPLICATION_JSON));
+
+            // Verify response
+            response.andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result").value(generatedUsername));
         }
 
         @Test

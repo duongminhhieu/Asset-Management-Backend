@@ -26,13 +26,13 @@ public class UserRequest {
     @FieldNotNullConstraint(field = "firstName", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "firstName", message = "FIELD_NOT_EMPTY")
     @Size(max = 128, message = "EXCEED_MAX_FIRSTNAME")
-    @Pattern(regexp = "^[a-zA-Z0-9 ]*$", message = "INVALID_FIRSTNAME")
+    @Pattern(regexp = "^[a-zA-Z ]*$", message = "INVALID_FIRSTNAME")
     private String firstName;
 
     @FieldNotNullConstraint(field = "lastName", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "lastName", message = "FIELD_NOT_EMPTY")
     @Size(max = 128, message = "EXCEED_MAX_LASTNAME")
-    @Pattern(regexp = "^[a-zA-Z0-9 ]*$", message = "INVALID_LASTNAME")
+    @Pattern(regexp = "^[a-zA-Z ]*$", message = "INVALID_LASTNAME")
     private String lastName;
 
     @DobConstraint(minAge = 18, message = "INVALID_DOB")

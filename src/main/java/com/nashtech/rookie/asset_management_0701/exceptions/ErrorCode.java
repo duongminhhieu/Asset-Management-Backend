@@ -44,6 +44,8 @@ public enum ErrorCode {
     PASSWORD_CHANGED(1111, "Password is already changed first time", HttpStatus.BAD_REQUEST),
     WRONG_PASSWORD(1112, "The current password is incorrect", HttpStatus.BAD_REQUEST),
     PASSWORD_SAME(1113, "The new password must be different from the current password", HttpStatus.BAD_REQUEST),
+    LOCATION_NAME_ALREADY_EXISTED(1114, "Location name is already exist", HttpStatus.BAD_REQUEST),
+    LOCATION_CODE_ALREADY_EXISTED(1115, "Location code is already exist", HttpStatus.BAD_REQUEST),
 
     // Category
     CATEGORY_NAME_ALREADY_EXISTED(1201, "Category is already existed. Please enter a different category"

@@ -10,6 +10,8 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserRespons
 public interface UserService {
     UserResponse createUser (UserRequest userRequest);
 
+    String generateUsername (String firstName, String lastName);
+
     PaginationResponse<UserResponse> getAllUser (UserSearchDto userSearchDto);
 
     void firstChangePassword (FirstChangePasswordRequest firstChangePasswordRequest);

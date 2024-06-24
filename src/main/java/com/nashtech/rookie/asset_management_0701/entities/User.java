@@ -62,4 +62,8 @@ public class User extends AuditEntity<String> {
 
     @ManyToOne(fetch = FetchType.EAGER)
     private Location location;
+
+    public void generateStaffCode () {
+        this.setStaffCode(String.format("SD%04d", getId()));
+    }
 }

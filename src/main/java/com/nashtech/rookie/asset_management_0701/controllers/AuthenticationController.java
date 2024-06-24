@@ -20,7 +20,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public APIResponse<AuthenticationResponse> login (@Valid @RequestBody AuthenticationRequest request) {
+    public APIResponse<AuthenticationResponse> login (@RequestBody @Valid AuthenticationRequest request) {
 
         return APIResponse.<AuthenticationResponse>builder()
                 .result(authenticationService.login(request))

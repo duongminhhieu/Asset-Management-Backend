@@ -22,35 +22,56 @@ import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.UserMapper;
+import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.utils.PageSortUtil;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
+import com.nashtech.rookie.asset_management_0701.utils.user.UserUtil;
 import lombok.RequiredArgsConstructor;
-
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final LocationRepository locationRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthUtil authUtil;
+    private final UserUtil userUtil;
 
     @Override
+    @Transactional
     public UserResponse createUser (UserRequest userRequest) {
-
-        String adminName = authUtil.getCurrentUserName();
-
+        if (ERole.ADMIN.equals(userRequest.getRole()) && userRequest.getLocationId() == null) {
+            throw new AppException(ErrorCode.ADMIN_NULL_LOCATION);
+        }
         validateJoinDate(userRequest);
-        User user = createUserFromRequest(userRequest, adminName);
+        DateTimeFormatter newFormatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        String username = userUtil.generateUsername(userRequest);
 
-        // Save user to get the actual ID then update correct staff code
-        user = userRepository.save(user);
-        user.setStaffCode(String.format("SD%04d", user.getId()));
-        user = userRepository.save(user);
+        User user = userMapper.toUser(userRequest);
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        if (userRequest.getRole().equals(ERole.USER)) {
+            User admin = authUtil.getCurrentUser();
+            userRequest.setLocationId(admin.getLocation().getId());
+            user.setLocation(admin.getLocation());
+        }
+        else {
+            user.setLocation(locationRepository.findById(userRequest.getLocationId()).orElseThrow());
+        }
+
+        user.setUsername(username);
+        user.setHashPassword(passwordEncoder.encode(username + "@" + newFormatter.format(userRequest.getDob())));
+        user.setStatus(EUserStatus.FIRST_LOGIN);
+        userRepository.save(user);
+        user.generateStaffCode();
+        return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public String generateUsername (String firstName, String lastName) {
+        return userUtil.generateUsernameFromWeb(firstName, lastName);
     }
 
     private void validateJoinDate (UserRequest userRequest) {
@@ -65,43 +86,6 @@ public class UserServiceImpl implements UserService {
         if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
             throw new AppException(ErrorCode.JOIN_DATE_WEEKEND);
         }
-    }
-
-    private StringBuilder generateUsername (UserRequest userRequest) {
-        StringBuilder username = new StringBuilder(userRequest.getFirstName().toLowerCase());
-        String[] splitSpace = userRequest.getLastName().toLowerCase().split(" ");
-
-        for (String s : splitSpace) {
-            username.append(s.charAt(0));
-        }
-
-        long count = userRepository.count(UserSpecification.usernameStartsWith(username.toString()));
-        if (count > 0) {
-            username.append(count);
-        }
-
-        return username;
-    }
-
-    private User createUserFromRequest (UserRequest userRequest, String adminName) {
-        String username = generateUsername(userRequest).toString();
-        DateTimeFormatter newFormatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-
-        if (userRequest.getRole().equals(ERole.USER)) {
-            User admin = userRepository
-                    .findByUsername(adminName)
-                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-            userRequest.setLocationId(admin.getLocation().getId());
-        }
-
-        User user = userMapper.toUser(userRequest);
-        user.setId(userRepository.count() + 1);
-        user.setStaffCode("SD0000");
-        user.setUsername(username);
-        user.setHashPassword(passwordEncoder.encode(username + "@" + newFormatter.format(userRequest.getDob())));
-        user.setStatus(EUserStatus.FIRST_LOGIN);
-
-        return user;
     }
 
     @Override

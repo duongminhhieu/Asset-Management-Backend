@@ -97,7 +97,7 @@ public class ApplicationConfig {
                         .hashPassword(passwordEncoder().encode(adminPassword))
                         .role(ERole.ADMIN)
                         .location(adminLocation)
-                        .status(EUserStatus.FIRST_LOGIN)
+                        .status(EUserStatus.ACTIVE)
                         .build();
                 userRepository.save(user);
                 log.warn("admin user has been created, please change it");
