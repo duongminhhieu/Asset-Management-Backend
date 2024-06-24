@@ -69,8 +69,6 @@ class UserServiceTest {
     @Autowired
     private UserServiceImpl userService;
 
-    @Autowired
-    private UserUtilImpl userUtil;
 
     private User adminUsing;
 

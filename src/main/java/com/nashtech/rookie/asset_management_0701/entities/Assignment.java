@@ -1,6 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.entities;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import jakarta.persistence.Column;
@@ -11,13 +11,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 
 
 @Entity
@@ -33,7 +33,7 @@ public class Assignment extends AuditEntity<String> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime assignedDate;
+    private LocalDate assignedDate;
 
     @Column(columnDefinition = "TEXT")
     private String note;
@@ -49,4 +49,7 @@ public class Assignment extends AuditEntity<String> {
 
     @ManyToOne
     private Asset asset;
+
+    @OneToOne
+    private ReturningRequest returningRequest;
 }

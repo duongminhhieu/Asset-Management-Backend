@@ -30,8 +30,6 @@ public class LocationServiceTest {
     @MockBean
     private LocationRepository locationRepository;
 
-    @Autowired
-    private LocationMapper locationMapper;
 
     @Autowired
     private LocationServiceImpl locationService;

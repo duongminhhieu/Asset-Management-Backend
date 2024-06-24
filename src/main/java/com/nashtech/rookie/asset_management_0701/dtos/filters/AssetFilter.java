@@ -20,18 +20,24 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AssetFilter {
     String searchString;
+
     @Builder.Default
     Set<EAssetState> states = Collections.emptySet();
+
     @Builder.Default
     Set<Long> categoryIds = Collections.emptySet();
+
     @Pattern(regexp = "name|assetCode|category|state", message = "INVALID_SORT_FIELD")
     @Builder.Default
     String orderBy = "name";
+
     @Pattern(regexp = "ASC|DESC|asc|desc", message = "INVALID_SORT_DIR")
     @Builder.Default
     String sortDir = "ASC";
+
     @Builder.Default
     Integer pageNumber = 1;
+
     @Builder.Default
     Integer pageSize = 20;
 
