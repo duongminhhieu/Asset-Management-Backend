@@ -20,7 +20,8 @@ public final class UserSpecification {
         String lowerCaseName = name.trim().toLowerCase();
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.like(criteriaBuilder.lower(
-                    criteriaBuilder.concat(root.get("firstName"), root.get("lastName"))), "%" + lowerCaseName + "%");
+                    criteriaBuilder.concat(criteriaBuilder.concat(root.get("firstName"), " "), root.get("lastName"))),
+                    "%" + lowerCaseName + "%");
     }
 
     public static Specification<User> hasStaffCodeContains (String staffCode) {
