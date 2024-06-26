@@ -19,7 +19,7 @@ public class CategoryCreateDto {
 
     @FieldNotNullConstraint(field = "name", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "name", message = "FIELD_NOT_EMPTY")
-    @Size(max = 255)
+    @Size(max = 255, message = "LENGTH_IS_OUT_OF_RANGE")
     String name;
 
     @FieldNotNullConstraint(field = "code", message = "FIELD_NOT_NULL")

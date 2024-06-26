@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
+import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
@@ -17,7 +20,9 @@ import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.repositories.AssetRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
+import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.services.assignment.AssignmentServiceImpl;
+import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,9 +45,16 @@ public class AssignmentServiceImplTest {
     @MockBean
     private AssetRepository assetRepository;
 
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private AuthUtil authUtil;
+
     @Autowired
     private AssignmentServiceImpl assignmentService;
 
+    private AssignmentCreateDto assignmentCreateDto;
     private Asset asset;
     private Assignment assignment;
     private User user1;
@@ -51,11 +63,17 @@ public class AssignmentServiceImplTest {
     @BeforeEach
     void setUp() {
 
+        Location location = Location
+                .builder()
+                .name("HCM")
+                .build();
+
         user1 = User.builder()
                 .id(1L)
                 .username("User1")
                 .firstName("User1")
                 .lastName("User1")
+                .location(location)
                 .build();
 
         user2 = User.builder()
@@ -63,6 +81,7 @@ public class AssignmentServiceImplTest {
                 .username("User2")
                 .firstName("User2")
                 .lastName("User2")
+                .location(location)
                 .build();
 
         asset = Asset.builder()
@@ -71,6 +90,7 @@ public class AssignmentServiceImplTest {
                 .state(EAssetState.AVAILABLE)
                 .installDate(LocalDate.now())
                 .specification("Specification")
+                .location(location)
                 .build();
 
         assignment = Assignment.builder()
@@ -80,6 +100,10 @@ public class AssignmentServiceImplTest {
                 .assignTo(user2)
                 .assignBy(user1)
                 .state(EAssignmentState.ACCEPTED)
+                .build();
+        assignmentCreateDto = AssignmentCreateDto.builder()
+                .userId(1L)
+                .assetId(1L)
                 .build();
     }
 
@@ -99,6 +123,23 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(paginationResponse.getData().getFirst().getAssignedDate()).isEqualTo(assignment.getAssignedDate());
+        }
+
+        @Test
+        void createAssignment_validRequest_returnAssignmentResponseDto() {
+            // GIVEN
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(assignmentRepository.save(any(Assignment.class))).thenReturn(assignment);
+            when(assetRepository.save(any(Asset.class))).thenReturn(asset);
+
+            // WHEN
+            AssignmentResponseDto response = assignmentService.createAssignment(assignmentCreateDto);
+
+            // THEN
+            assertThat(response).isNotNull();
+            assertThat(response.getId()).isEqualTo(1L);
         }
 
         @Test
@@ -131,6 +172,94 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void createAssignment_invalidRequest_returnUserNotFoundException() {
+            // GIVEN
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.createAssignment(assignmentCreateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        void createAssignment_invalidRequest_returnAssetNotFoundException() {
+            // GIVEN
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+            when(assetRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.createAssignment(assignmentCreateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void createAssignment_invalidRequest_returnAssetNotAvailableException() {
+            // GIVEN
+            asset.setState(EAssetState.ASSIGNED);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.createAssignment(assignmentCreateDto);
+            });
+
+            // THEN
+
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_STATE_NOT_AVAILABLE);
+        }
+
+        @Test
+        void createAssignment_invalidRequest_returnAssetLocationInvalidException() {
+            // GIVEN
+            Location loc = Location.builder()
+                            .name("Ha Noi")
+                            .build();
+            asset.setLocation(loc);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.createAssignment(assignmentCreateDto);
+            });
+
+            // THEN
+
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_LOCATION_INVALID_WITH_ADMIN);
+        }
+
+        @Test
+        void createAssignment_invalidRequest_returnUserLocationInvalidException() {
+            // GIVEN
+            Location loc = Location.builder()
+                    .name("Ha Noi")
+                    .build();
+            user2.setLocation(loc);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user2));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.createAssignment(assignmentCreateDto);
+            });
+
+            // THEN
+
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_LOCATION_INVALID_WITH_ADMIN);
         }
 
         @Test

@@ -46,6 +46,8 @@ public enum ErrorCode {
     PASSWORD_SAME(1113, "The new password must be different from the current password", HttpStatus.BAD_REQUEST),
     LOCATION_NAME_ALREADY_EXISTED(1114, "Location name is already exist", HttpStatus.BAD_REQUEST),
     LOCATION_CODE_ALREADY_EXISTED(1115, "Location code is already exist", HttpStatus.BAD_REQUEST),
+    USER_LOCATION_INVALID_WITH_ADMIN(1116, "User location must be the same with creator location"
+            , HttpStatus.BAD_REQUEST),
 
     // Category
     CATEGORY_NAME_ALREADY_EXISTED(1201, "Category is already existed. Please enter a different category"
@@ -58,22 +60,28 @@ public enum ErrorCode {
     ASSET_NOT_FOUND(1302, "Asset not found", HttpStatus.NOT_FOUND),
     ASSET_IS_ASSIGNED(1303, "Asset is assigned", HttpStatus.BAD_REQUEST),
     ASSET_WAS_ASSIGNED(1304, "Asset was assigned in the past", HttpStatus.BAD_REQUEST),
+    ASSET_STATE_NOT_AVAILABLE(1305, "Asset state is not available", HttpStatus.BAD_REQUEST),
+    ASSET_LOCATION_INVALID_WITH_ADMIN(1306, "Asset location must be the same with creator location"
+            , HttpStatus.BAD_REQUEST),
 
     // Assignment
     ASSIGNMENT_NOT_FOUND(1401, "Assignment not found", HttpStatus.NOT_FOUND),
     ASSIGNMENT_CANNOT_DELETE(1402, "Only can delete assignments that have state is WAITING", HttpStatus.BAD_REQUEST),
 
+    // Assignment
+    ASSIGNMENT_ASSIGNED_DATE_INVALID(1403, "Assignment's assigned date has been now or future", HttpStatus.BAD_REQUEST),
     // constraint violation
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
-        "contains at least 1 uppercase, " +
-        "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),
+            "contains at least 1 uppercase, " +
+            "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),
     INVALID_CATEGORY_CODE(2202, "Category must be {min} characters", HttpStatus.BAD_REQUEST),
     FIELD_NOT_EMPTY(2003, "\"{field}\" must not be empty", HttpStatus.BAD_REQUEST),
     FIELD_NOT_NULL(2004, "\"{field}\" must not be null", HttpStatus.BAD_REQUEST),
     STATE_NOT_AVAILABLE(2205, "Status must be any of AVAILABLE, NOT_AVAILABLE", HttpStatus.BAD_REQUEST),
     PAGE_SIZE_LESS_THAN_ONE(2005, "Page size must be larger than 0", HttpStatus.BAD_REQUEST),
     PAGE_NUMBER_LESS_THAN_ONE(2006, "Page number must be larger than 0", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_AVAILABLE(2100, "This is not a type of user for this system", HttpStatus.BAD_REQUEST);
+    ROLE_NOT_AVAILABLE(2100, "This is not a type of user for this system", HttpStatus.BAD_REQUEST),
+    LENGTH_IS_OUT_OF_RANGE(2007, "Length is out of range", HttpStatus.BAD_REQUEST);
 
     private final int internalCode;
     private final String message;

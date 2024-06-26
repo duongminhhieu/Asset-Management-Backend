@@ -4,6 +4,6 @@ public enum EAssetState {
     AVAILABLE,
     NOT_AVAILABLE,
     ASSIGNED,
-    WAITING_FOR_RECYCLING,
+    WAITING_FOR_RECYCLE,
     RECYCLED
 }

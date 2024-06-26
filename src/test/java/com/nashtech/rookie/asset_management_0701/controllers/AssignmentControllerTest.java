@@ -1,7 +1,17 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
+import com.nashtech.rookie.asset_management_0701.entities.Asset;
+import com.nashtech.rookie.asset_management_0701.entities.Assignment;
+import com.nashtech.rookie.asset_management_0701.entities.User;
+import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
+import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
+import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.services.assignment.AssignmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -23,6 +33,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,10 +44,18 @@ class AssignmentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private AssignmentService assignmentService;
 
     private AssignmentHistory assignmentHistory;
+    private AssignmentCreateDto assignmentCreateDto;
+    private AssignmentResponseDto assignmentResponseDto;
+    private User user;
+    private Asset asset;
+    private Assignment assignment;
 
     @BeforeEach
     void setUp() {
@@ -46,6 +65,36 @@ class AssignmentControllerTest {
                 .assignTo("user")
                 .assignedDate(LocalDate.now())
                 .returnDate(LocalDate.now())
+                .build();
+
+        assignmentCreateDto = AssignmentCreateDto.builder()
+                .userId(1L)
+                .assetId(1L)
+                .assignedDate(LocalDate.now())
+                .note("Note")
+                .build();
+
+        user = User.builder()
+                .id(1L)
+                .build();
+
+        asset = Asset.builder()
+                .id(1L)
+                .state(EAssetState.AVAILABLE)
+                .build();
+
+        assignment = Assignment.builder()
+                .id(1L)
+                .state(EAssignmentState.WAITING)
+                .assignBy(user)
+                .assignTo(user)
+                .asset(asset)
+                .build();
+
+        assignmentResponseDto = AssignmentResponseDto.builder()
+                .id(1L)
+                .assignedDate(LocalDate.now())
+                .note("Note")
                 .build();
     }
 
@@ -76,6 +125,19 @@ class AssignmentControllerTest {
         }
 
         @Test
+        @WithMockUser(roles = "ADMIN")
+        void createNewAssignment_validRequest_success() throws Exception {
+            // GIVEN
+            when(assignmentService.createAssignment(any(AssignmentCreateDto.class))).thenReturn(assignmentResponseDto);
+
+            // WHEN THEN
+            mockMvc.perform(post("/api/v1/assignments")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assignmentCreateDto)))
+                    .andExpect(status().isCreated());
+        }
+
+        @Test
         @WithMockUser(username = "admin", roles = {"ADMIN"})
         void deleteAssignment_validRequest_success() throws Exception {
             // GIVEN
@@ -91,6 +153,19 @@ class AssignmentControllerTest {
 
     @Nested
     class UnhappyCase {
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void createNewAssignment_invalidRequest_success() throws Exception {
+            // GIVEN
+            asset.setState(EAssetState.ASSIGNED);
+            when(assignmentService.createAssignment(any(AssignmentCreateDto.class))).thenThrow(new AppException(ErrorCode.ASSET_STATE_NOT_AVAILABLE));
+
+            // WHEN THEN
+            mockMvc.perform(post("/api/v1/assignments")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assignmentCreateDto)))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
 }

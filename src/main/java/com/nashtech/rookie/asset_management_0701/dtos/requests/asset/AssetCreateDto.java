@@ -27,12 +27,12 @@ public class AssetCreateDto {
 
     @FieldNotNullConstraint(field = "name", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "name", message = "FIELD_NOT_EMPTY")
-    @Size(max = 255)
+    @Size(max = 255, message = "LENGTH_IS_OUT_OF_RANGE")
     String name;
 
     @FieldNotNullConstraint(field = "specification", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "specification", message = "FIELD_NOT_EMPTY")
-    @Size(max = 1024)
+    @Size(max = 1024, message = "LENGTH_IS_OUT_OF_RANGE")
     String specification;
 
     @FieldNotNullConstraint(field = "name", message = "FIELD_NOT_NULL")
