@@ -11,4 +11,6 @@ public interface AssetService {
     PaginationResponse<AssetResponseDto> getAllAssets (AssetFilter assetFilter);
 
     AssetResponseDto getAssetById (Long id);
+
+    void deleteAsset (Long id);
 }

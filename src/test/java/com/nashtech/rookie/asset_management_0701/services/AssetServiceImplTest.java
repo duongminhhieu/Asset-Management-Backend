@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.services;
 
+import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
@@ -48,6 +50,9 @@ class AssetServiceImplTest {
 
     @Mock
     private AssetRepository assetRepository;
+
+    @Mock
+    private AssignmentRepository assignmentRepository;
 
     @Mock
     private AssetMapper assetMapper;
@@ -118,6 +123,7 @@ class AssetServiceImplTest {
                 .pageSize(20)
                 .pageNumber(1)
                 .build();
+
     }
 
     @Nested
@@ -181,6 +187,18 @@ class AssetServiceImplTest {
             // Then
             assertEquals(assetResponseDto, result);
         }
+
+        @Test
+        void testDeleteAsset_validRequest_returnOk() {
+            // Given
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+
+            // When
+            assetService.deleteAsset(1L);
+
+            // Then
+            verify(assetRepository, times(1)).delete(asset);
+        }
     }
 
     @Nested
@@ -240,7 +258,39 @@ class AssetServiceImplTest {
             assertThrows(AppException.class, () -> assetService.getAssetById(1L));
 
             // Then
-            verify(assetRepository).findById(1L);
+            assertThatThrownBy(() -> assetService.getAssetById(1L))
+                    .isInstanceOf(AppException.class)
+                    .hasMessageContaining(ErrorCode.ASSET_NOT_FOUND.getMessage());
+        }
+        @Test
+        void testDeleteAssset_AssetAssigned_returnException(){
+            // Given
+            asset.setState(EAssetState.ASSIGNED);
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+
+            // When
+            assertThrows(AppException.class, () -> assetService.deleteAsset(1L));
+
+            // Then
+            assertThatThrownBy(()-> assetService.deleteAsset(1L))
+                    .isInstanceOf(AppException.class)
+                    .hasMessageContaining(ErrorCode.ASSET_IS_ASSIGNED.getMessage());
+        }
+
+        @Test
+        void testDeleteAsset_AssetWasAssigned_returnException(){
+            // Given
+            asset.setState(EAssetState.AVAILABLE);
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(assignmentRepository.existsByAssetId(1L)).willReturn(true);
+
+            // When
+            assertThrows(AppException.class, () -> assetService.deleteAsset(1L));
+
+            // Then
+            assertThatThrownBy(()-> assetService.deleteAsset(1L))
+                    .isInstanceOf(AppException.class)
+                    .hasMessageContaining(ErrorCode.ASSET_WAS_ASSIGNED.getMessage());
         }
     }
 }

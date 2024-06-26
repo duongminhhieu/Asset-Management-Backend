@@ -17,10 +17,12 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.asset.AssetRespo
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Category;
 import com.nashtech.rookie.asset_management_0701.entities.Location;
+import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.AssetMapper;
 import com.nashtech.rookie.asset_management_0701.repositories.AssetRepository;
+import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.CategoryRepository;
 import com.nashtech.rookie.asset_management_0701.utils.PageSortUtil;
 import com.nashtech.rookie.asset_management_0701.utils.asset_utils.AssetUtil;
@@ -35,6 +37,7 @@ public class AssetServiceImpl implements AssetService {
     private final AssetRepository assetRepository;
     private final AssetMapper assetMapper;
     private final CategoryRepository categoryRepository;
+    private final AssignmentRepository assignmentRepository;
     private final AuthUtil authUtil;
 
     @Override
@@ -101,5 +104,19 @@ public class AssetServiceImpl implements AssetService {
         Asset asset = assetRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ASSET_NOT_FOUND));
         return assetMapper.toAssetResponseDto(asset);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAsset (Long id) {
+        if (assignmentRepository.existsByAssetId(id)) {
+            throw new AppException(ErrorCode.ASSET_WAS_ASSIGNED);
+        }
+        Asset asset = assetRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.ASSET_NOT_FOUND));
+        if (asset.getState().equals(EAssetState.ASSIGNED)) {
+            throw new AppException(ErrorCode.ASSET_IS_ASSIGNED);
+        }
+        assetRepository.delete(asset);
     }
 }

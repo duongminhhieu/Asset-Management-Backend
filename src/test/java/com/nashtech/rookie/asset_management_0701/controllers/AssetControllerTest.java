@@ -135,6 +135,19 @@ class AssetControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.name", is(assetResponseDto.getName())));
         }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testDeleteAssetById_validRequets_returnSuccessMessage() throws Exception {
+            // GIVEN
+            when(assetService.getAssetById(any())).thenReturn(assetResponseDto);
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/assets/{id}", 1)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message", is("Delete asset successfully")));
+        }
     }
 
     @Nested

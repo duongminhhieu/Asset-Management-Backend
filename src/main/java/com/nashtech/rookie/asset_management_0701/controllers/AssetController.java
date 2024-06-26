@@ -2,6 +2,7 @@ package com.nashtech.rookie.asset_management_0701.controllers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,6 +50,15 @@ public class AssetController {
     public APIResponse<AssetResponseDto> getAssetById (@PathVariable Long id) {
         return APIResponse.<AssetResponseDto>builder()
                 .result(assetService.getAssetById(id))
+                .build();
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public  APIResponse<String> deleteAsset (@PathVariable Long id) {
+        assetService.deleteAsset(id);
+        return APIResponse.<String>builder()
+                .message("Delete asset successfully")
                 .build();
     }
 }
