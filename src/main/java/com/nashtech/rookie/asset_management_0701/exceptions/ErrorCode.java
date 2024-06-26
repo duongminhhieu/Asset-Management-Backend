@@ -58,6 +58,11 @@ public enum ErrorCode {
     ASSET_NOT_FOUND(1302, "Asset not found", HttpStatus.NOT_FOUND),
     ASSET_IS_ASSIGNED(1303, "Asset is assigned", HttpStatus.BAD_REQUEST),
     ASSET_WAS_ASSIGNED(1304, "Asset was assigned in the past", HttpStatus.BAD_REQUEST),
+
+    // Assignment
+    ASSIGNMENT_NOT_FOUND(1401, "Assignment not found", HttpStatus.NOT_FOUND),
+    ASSIGNMENT_CANNOT_DELETE(1402, "Only can delete assignments that have state is WAITING", HttpStatus.BAD_REQUEST),
+
     // constraint violation
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
         "contains at least 1 uppercase, " +

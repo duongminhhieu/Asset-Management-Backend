@@ -9,6 +9,8 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationRespon
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
+import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.AssignmentMapper;
@@ -43,5 +45,20 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .itemsPerPage(pageable.getPageSize())
                 .data(assignments.map(assignmentMapper::toAssignmentHistory).toList())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteAssignment (Long id) {
+        Assignment assignment = assignmentRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+        if (assignment.getState() == EAssignmentState.ACCEPTED) {
+            throw new AppException(ErrorCode.ASSIGNMENT_CANNOT_DELETE);
+        }
+        Asset asset = assignment.getAsset();
+        asset.setState(EAssetState.AVAILABLE);
+        assetRepository.save(asset);
+        assignmentRepository.delete(assignment);
     }
 }

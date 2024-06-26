@@ -5,4 +5,5 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.Assign
 
 public interface AssignmentService {
     PaginationResponse<AssignmentHistory> getAssignmentHistory (Long assetId, Integer page, Integer size);
+    void deleteAssignment (Long id);
 }

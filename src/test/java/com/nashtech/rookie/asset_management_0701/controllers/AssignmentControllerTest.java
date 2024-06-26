@@ -74,6 +74,19 @@ class AssignmentControllerTest {
                     .andExpect(jsonPath("$.result.data", hasSize(1)))
                     .andExpect(jsonPath("$.result.data[0].assignBy", is("admin")));
         }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void deleteAssignment_validRequest_success() throws Exception {
+            // GIVEN
+            long id = 1;
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/assignments/" + id)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message", is("Assignment deleted successfully")));
+        }
     }
 
     @Nested

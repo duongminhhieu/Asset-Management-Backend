@@ -100,6 +100,19 @@ public class AssignmentServiceImplTest {
             // THEN
             assertThat(paginationResponse.getData().getFirst().getAssignedDate()).isEqualTo(assignment.getAssignedDate());
         }
+
+        @Test
+        void testDeleteAssignment_validRequest_success() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            when(assignmentRepository.findById(any())).thenReturn(Optional.of(assignment));
+
+            // WHEN
+            assignmentService.deleteAssignment(1L);
+
+            // THEN
+            assertThat(asset.getState()).isEqualTo(EAssetState.AVAILABLE);
+        }
     }
 
 
@@ -118,6 +131,35 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void testDeleteAssignment_invalidAssignmentId_throwException() {
+            // GIVEN
+            when(assignmentRepository.findById(any())).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.deleteAssignment(1L);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        @Test
+        void testDeleteAssignment_invalidAssignmentState_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.ACCEPTED);
+            when(assignmentRepository.findById(any())).thenReturn(Optional.of(assignment));
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.deleteAssignment(1L);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_CANNOT_DELETE);
         }
     }
 }

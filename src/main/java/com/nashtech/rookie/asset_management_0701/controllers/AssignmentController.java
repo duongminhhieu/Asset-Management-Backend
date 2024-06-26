@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,16 @@ public class AssignmentController {
                                                         , @RequestParam(defaultValue = "10") Integer pageSize){
         return APIResponse.<PaginationResponse<AssignmentHistory>>builder()
                 .result(assignmentService.getAssignmentHistory(assetId, pageNumber, pageSize))
+                .build();
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<String> deleteAssignment (@PathVariable Long id){
+        assignmentService.deleteAssignment(id);
+
+        return APIResponse.<String>builder()
+                .message("Assignment deleted successfully")
                 .build();
     }
 }
