@@ -48,9 +48,8 @@ public final class UserSpecification {
         }
 
         ERole eRole = ERole.valueOf(upperCaseRole);
-        return (root, query, criteriaBuilder) -> {
-            return criteriaBuilder.equal(root.get("role"), eRole);
-        };
+
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("role"), eRole);
     }
 
     public static Specification<User> usernameStartsWith (String baseUsername) {

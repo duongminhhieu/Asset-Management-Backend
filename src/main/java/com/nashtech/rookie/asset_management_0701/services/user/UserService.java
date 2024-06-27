@@ -14,6 +14,9 @@ public interface UserService {
 
     PaginationResponse<UserResponse> getAllUser (UserSearchDto userSearchDto);
 
+    PaginationResponse<UserResponse> getAllUserAssignment (UserSearchDto userSearchDto);
+
     void firstChangePassword (FirstChangePasswordRequest firstChangePasswordRequest);
+
     void changePassword (ChangePasswordRequest changePasswordRequest);
 }

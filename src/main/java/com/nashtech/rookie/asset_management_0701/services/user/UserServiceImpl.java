@@ -90,31 +90,43 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PaginationResponse<UserResponse> getAllUser (UserSearchDto dto) {
+        return getUserPaginationResponse(dto, true);
+    }
+
+    @Override
+    public PaginationResponse<UserResponse> getAllUserAssignment (UserSearchDto dto) {
+        return getUserPaginationResponse(dto, false);
+    }
+
+    private PaginationResponse<UserResponse> getUserPaginationResponse (UserSearchDto dto, boolean excludeCurrentUser) {
         var pageRequest = PageSortUtil.createPageRequest(
-                    dto.getPageNumber() - 1,
-                    dto.getPageSize(),
-                    dto.getOrderBy().equals("type")?"role":dto.getOrderBy(),
-                    PageSortUtil.parseSortDirection(dto.getSortDir()),
-                    DefaultSortOptions.DEFAULT_USER_SORT_BY);
+                dto.getPageNumber() - 1,
+                dto.getPageSize(),
+                dto.getOrderBy().equals("type") ? "role" : dto.getOrderBy(),
+                PageSortUtil.parseSortDirection(dto.getSortDir()),
+                DefaultSortOptions.DEFAULT_USER_SORT_BY);
 
         var searchString = dto.getSearchString();
         var currentUser = authUtil.getCurrentUser();
         var currentLocation = currentUser.getLocation();
 
-        var users = userRepository.findAll(
-                        Specification.where(UserSpecification.hasNameContains(searchString))
-                                .or(UserSpecification.hasStaffCodeContains(searchString))
-                                .and(UserSpecification.hasRole(dto.getType()))
-                                .and(UserSpecification.hasLocation(currentLocation))
-                                .and(UserSpecification.excludeUser(currentUser)),
-                        pageRequest);
+        var specification = Specification.where(UserSpecification.hasNameContains(searchString))
+                .or(UserSpecification.hasStaffCodeContains(searchString))
+                .and(UserSpecification.hasRole(dto.getType()))
+                .and(UserSpecification.hasLocation(currentLocation));
+
+        if (excludeCurrentUser) {
+            specification = specification.and(UserSpecification.excludeUser(currentUser));
+        }
+
+        var users = userRepository.findAll(specification, pageRequest);
 
         return PaginationResponse.<UserResponse>builder()
-                    .page(pageRequest.getPageNumber() + 1)
-                    .total(users.getTotalElements())
-                    .itemsPerPage(pageRequest.getPageSize())
-                    .data(users.map(userMapper::toUserResponse).toList())
-                    .build();
+                .page(pageRequest.getPageNumber() + 1)
+                .total(users.getTotalElements())
+                .itemsPerPage(pageRequest.getPageSize())
+                .data(users.map(userMapper::toUserResponse).toList())
+                .build();
     }
 
     @Override

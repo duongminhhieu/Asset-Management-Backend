@@ -176,6 +176,22 @@ public class UserControllerTest {
         }
 
         @Test
+        @WithMockUser(roles = "ADMIN")
+        void testGetAllUsersAssignment_whenNotGivenAnyParams_willReturnResponse() throws Exception {
+            // given
+            when(userService.getAllUserAssignment(any(UserSearchDto.class))).thenReturn(userListResponse);
+            // when and then
+            mockMvc.perform(get("/api/v1/users/assign")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(userRequest)))
+                    .andExpect(jsonPath("$.result.total").value(1))
+                    .andExpect(jsonPath("$.result.page").value(1))
+                    .andExpect(jsonPath("$.result.itemsPerPage").value(20))
+                    .andExpect(jsonPath("$.result.data").exists());
+        }
+
+        @Test
         @WithMockUser(roles = "ADMIN", username = "admin")
         void testChangePassword_validRequest_success() throws Exception {
             // given

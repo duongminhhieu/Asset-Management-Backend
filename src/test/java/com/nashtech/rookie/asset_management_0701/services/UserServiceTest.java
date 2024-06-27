@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,6 @@ class UserServiceTest {
 
     @Autowired
     private UserServiceImpl userService;
-
 
     private User adminUsing;
 
@@ -173,15 +173,13 @@ class UserServiceTest {
 
         @ParameterizedTest
         @CsvSource({
-            "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
-            "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
-            "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
+                "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
+                "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
+                "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
         })
         @WithMockUser(username = "abc.com", roles = "ADMIN")
         void testGetAllUse_whenPassInValid_shouldReturnCorrectFormat (
                 String searchString, String type, String sortBy, String sortDir, Integer pageNumber, Integer pageSize) {
-            log.info("searchString:{}", searchString);
-            log.info("type:{}", type);
 
             // set up
             var searchDto = new UserSearchDto(searchString, type, sortBy, sortDir, pageNumber, pageSize);
@@ -194,6 +192,37 @@ class UserServiceTest {
 
             // run
             var result = userService.getAllUser(searchDto);
+
+            assertThat(result)
+                    .hasFieldOrPropertyWithValue("page", 1)
+                    .hasFieldOrPropertyWithValue("total", 1L)
+                    .hasFieldOrPropertyWithValue("itemsPerPage", 20);
+            assertThat(result.getData().getFirst())
+                    .usingRecursiveComparison()
+                    .isEqualTo(userMapper.toUserResponse(userInDB));
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+                "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
+                "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
+                "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
+        })
+        @WithMockUser(username = "abc.com", roles = "ADMIN")
+        void testGetAllUseAssignment_whenPassInValid_shouldReturnCorrectFormat (
+                String searchString, String type, String sortBy, String sortDir, Integer pageNumber, Integer pageSize) {
+
+            // set up
+            var searchDto = new UserSearchDto(searchString, type, sortBy, sortDir, pageNumber, pageSize);
+            var pageRequest = PageRequest.of(0, 20);
+            var resultPage = new PageImpl<>(List.of(userInDB), pageRequest, 1);
+            when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(resultPage);
+
+            when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));
+
+            // run
+            var result = userService.getAllUserAssignment(searchDto);
 
             assertThat(result)
                     .hasFieldOrPropertyWithValue("page", 1)
@@ -234,7 +263,6 @@ class UserServiceTest {
             // then
             verify(userRepository, times(1)).save(any(User.class));
         }
-
     }
 
     @Nested
@@ -297,7 +325,7 @@ class UserServiceTest {
             var resultPage = new PageImpl<>(List.of(userInDB), pageRequest, 1);
             when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
                     .thenReturn(resultPage);
-            
+
             when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));
 
             // run
@@ -315,15 +343,15 @@ class UserServiceTest {
             var searchDto = new UserSearchDto("first", "ADMIN", "A", "DESC", 0, 20);
             var pageRequest = PageRequest.of(0, 20);
             var resultPage = new PageImpl<>(List.of(userInDB), pageRequest, 1);
-            when(userRepository.findAll(any(Specification.class), 
+            when(userRepository.findAll(any(Specification.class),
                     argThat((Pageable page)->{
-                        return !page.getSort().filter((order)->order.getProperty().equals("A")).isEmpty();
+                        return !page.getSort().filter(order->order.getProperty().equals("A")).isEmpty();
                     })))
                     .thenThrow(new PropertyReferenceException("A", TypeInformation.of(String.class), List.of()));
-                    
-            when(userRepository.findAll(any(Specification.class), 
+
+            when(userRepository.findAll(any(Specification.class),
                     argThat((Pageable page)->{
-                        return page.getSort().filter((order)->order.getProperty().equals("A")).isEmpty();
+                        return page.getSort().filter(order->order.getProperty().equals("A")).isEmpty();
                     })))
                     .thenReturn(resultPage);
             when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));

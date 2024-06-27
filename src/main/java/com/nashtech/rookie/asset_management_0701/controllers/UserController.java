@@ -52,6 +52,17 @@ public class UserController {
                 .result(result)
                 .build();
     }
+
+    @GetMapping("/assign")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<PaginationResponse<UserResponse>> getAllUsersAssignment (
+            @Valid @ModelAttribute UserSearchDto dto) {
+        var result = userService.getAllUserAssignment(dto);
+        return APIResponse.<PaginationResponse<UserResponse>>builder()
+                .result(result)
+                .build();
+    }
+
     @PatchMapping("/first-change-password")
     @ResponseStatus(HttpStatus.OK)
     public APIResponse<String> firstChangePassword (
@@ -59,6 +70,7 @@ public class UserController {
         userService.firstChangePassword(firstChangePasswordRequest);
         return APIResponse.<String>builder().message("Change password is success").build();
     }
+
     @PatchMapping("/change-password")
     @ResponseStatus(HttpStatus.OK)
     public APIResponse<String> changePassword (@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
