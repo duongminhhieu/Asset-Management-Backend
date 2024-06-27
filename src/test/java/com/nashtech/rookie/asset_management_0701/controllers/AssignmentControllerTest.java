@@ -2,8 +2,10 @@ package com.nashtech.rookie.asset_management_0701.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentUpdateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
@@ -32,8 +34,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,6 +57,8 @@ class AssignmentControllerTest {
     private AssignmentHistory assignmentHistory;
     private AssignmentCreateDto assignmentCreateDto;
     private AssignmentResponseDto assignmentResponseDto;
+    private AssignmentResponse assignmentResponse;
+    private AssignmentUpdateDto assignmentUpdateDto;
     private User user;
     private Asset asset;
     private Assignment assignment;
@@ -92,6 +98,24 @@ class AssignmentControllerTest {
                 .build();
 
         assignmentResponseDto = AssignmentResponseDto.builder()
+                .id(1L)
+                .assignedDate(LocalDate.now())
+                .note("Note")
+                .build();
+        assignmentUpdateDto = AssignmentUpdateDto.builder()
+                .userId(1L)
+                .assetId(1L)
+                .assignedDate(LocalDate.now())
+                .note("Note")
+                .build();
+
+        assignmentResponseDto = AssignmentResponseDto.builder()
+                .id(1L)
+                .assignedDate(LocalDate.now())
+                .note("Note")
+                .build();
+
+        assignmentResponse = AssignmentResponse.builder()
                 .id(1L)
                 .assignedDate(LocalDate.now())
                 .note("Note")
@@ -152,6 +176,37 @@ class AssignmentControllerTest {
 
         @Test
         @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void updateAssignment_validRequest_success() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            when(assignmentService.updateAssignment(any(Long.class), any(AssignmentUpdateDto.class))).thenReturn(assignmentResponseDto);
+
+            // WHEN THEN
+            mockMvc.perform(put("/api/v1/assignments/{id}", assignmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assignmentUpdateDto)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.id").value(1L))
+                    .andExpect(jsonPath("$.result.note").value("Note"));
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void getAssignment_validRequest_success() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            when(assignmentService.getAssignment(anyLong())).thenReturn(assignmentResponse);
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments/{id}", assignmentId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.id").value(1L))
+                    .andExpect(jsonPath("$.result.note").value("Note"));
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
         void getAllAssignments_validRequest_success() throws Exception {
             // Given
             PaginationResponse<AssignmentResponseDto> assetPagination = PaginationResponse.<AssignmentResponseDto>builder()
@@ -189,6 +244,60 @@ class AssignmentControllerTest {
                             .content(objectMapper.writeValueAsString(assignmentCreateDto)))
                     .andExpect(status().isBadRequest());
         }
-    }
 
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void updateAssignment_assignmentNotFound() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            when(assignmentService.updateAssignment(any(Long.class), any(AssignmentUpdateDto.class))).thenThrow(new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+            // WHEN THEN
+            mockMvc.perform(put("/api/v1/assignments/{id}", assignmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assignmentUpdateDto)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void updateAssignment_assignmentNotBelongToYou() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            when(assignmentService.updateAssignment(any(Long.class), any(AssignmentUpdateDto.class))).thenThrow(new AppException(ErrorCode.ASSIGMENT_NOT_BELONG_TO_YOU));
+
+            // WHEN THEN
+            mockMvc.perform(put("/api/v1/assignments/{id}", assignmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assignmentUpdateDto)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void updateAssignment_invalidAssignmentState() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            when(assignmentService.updateAssignment(any(Long.class), any(AssignmentUpdateDto.class))).thenThrow(new AppException(ErrorCode.ASSIGMENT_CANNOT_UPDATE));
+
+            // WHEN THEN
+            mockMvc.perform(put("/api/v1/assignments/{id}", assignmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assignmentUpdateDto)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void getAssignment_assignmentNotFound() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            when(assignmentService.getAssignment(anyLong())).thenThrow(new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments/{id}", assignmentId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+    }
 }

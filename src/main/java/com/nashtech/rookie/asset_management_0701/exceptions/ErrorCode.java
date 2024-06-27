@@ -70,6 +70,10 @@ public enum ErrorCode {
 
     // Assignment
     ASSIGNMENT_ASSIGNED_DATE_INVALID(1403, "Assignment's assigned date has been now or future", HttpStatus.BAD_REQUEST),
+    ASSIGMENT_CANNOT_UPDATE(1404, "Assignment can't be updated", HttpStatus.BAD_REQUEST),
+    ASSIGMENT_NOT_BELONG_TO_YOU(1405, "Assignment's not belong to you", HttpStatus.BAD_REQUEST),
+
+    // constraint violation
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
             "contains at least 1 uppercase, " +
             "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),
@@ -80,7 +84,8 @@ public enum ErrorCode {
     PAGE_SIZE_LESS_THAN_ONE(2005, "Page size must be larger than 0", HttpStatus.BAD_REQUEST),
     PAGE_NUMBER_LESS_THAN_ONE(2006, "Page number must be larger than 0", HttpStatus.BAD_REQUEST),
     ROLE_NOT_AVAILABLE(2100, "This is not a type of user for this system", HttpStatus.BAD_REQUEST),
-    LENGTH_IS_OUT_OF_RANGE(2007, "Length is out of range", HttpStatus.BAD_REQUEST);
+    LENGTH_IS_OUT_OF_RANGE(2007, "Length is out of range", HttpStatus.BAD_REQUEST),
+    DATE_IS_NOT_VALID(2008, "Date is not valid", HttpStatus.BAD_REQUEST);
 
     private final int internalCode;
     private final String message;

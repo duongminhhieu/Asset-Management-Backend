@@ -18,7 +18,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AssignmentCreateDto {
+public class AssignmentUpdateDto {
 
     @FieldNotNullConstraint(field = "user", message = "FIELD_NOT_NULL")
     @FieldNotEmptyConstraint(field = "user", message = "FIELD_NOT_EMPTY")

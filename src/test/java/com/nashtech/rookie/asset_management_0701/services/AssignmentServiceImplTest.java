@@ -8,8 +8,10 @@ import static org.mockito.Mockito.when;
 
 import com.nashtech.rookie.asset_management_0701.dtos.filters.AssignmentFilter;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentUpdateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
@@ -57,6 +59,7 @@ public class AssignmentServiceImplTest {
     private AssignmentServiceImpl assignmentService;
 
     private AssignmentCreateDto assignmentCreateDto;
+    private AssignmentUpdateDto assignmentUpdateDto;
     private Asset asset;
     private Assignment assignment;
     private User user1;
@@ -106,6 +109,10 @@ public class AssignmentServiceImplTest {
                 .build();
         assignmentCreateDto = AssignmentCreateDto.builder()
                 .userId(1L)
+                .assetId(1L)
+                .build();
+        assignmentUpdateDto = AssignmentUpdateDto.builder()
+                .userId(2L)
                 .assetId(1L)
                 .build();
         assignmentFilter = AssignmentFilter.builder()
@@ -162,6 +169,38 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(asset.getState()).isEqualTo(EAssetState.AVAILABLE);
+        }
+
+        @Test
+        void updateAssignment_validRequest_returnAssignmentResponseDto() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+            when(assetRepository.save(any(Asset.class))).thenReturn(asset);
+
+            // WHEN
+            AssignmentResponseDto response = assignmentService.updateAssignment(1L, assignmentUpdateDto);
+
+            // THEN
+            assertThat(response).isNotNull();
+            assertThat(response.getId()).isEqualTo(1L);
+        }
+
+        @Test
+        void getAssignment_validRequest_returnAssignmentResponse() {
+            // GIVEN
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(assignmentRepository.save(any(Assignment.class))).thenReturn(assignment);
+
+            // WHEN
+            AssignmentResponse response = assignmentService.getAssignment(1L);
+
+            // THEN
+            assertThat(response).isNotNull();
+            assertThat(response.getId()).isEqualTo(1L);
         }
 
         @Test
@@ -314,6 +353,173 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_CANNOT_DELETE);
+        }
+
+        @Test
+        void updateAssignment_invalidAssignmentId_throwException() {
+            // GIVEN
+            when(assignmentRepository.findById(any())).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        @Test
+        void updateAssignment_invalidCurrentUser_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user2); // user2 is not the assigner
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGMENT_NOT_BELONG_TO_YOU);
+        }
+
+        @Test
+        void updateAssignment_invalidAssignmentState_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.ACCEPTED); // State not WAITING
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGMENT_CANNOT_UPDATE);
+        }
+
+        @Test
+        void updateAssignment_userNotFound_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(userRepository.findById(2L)).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        void updateAssignment_assetNotFound_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+            when(assetRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void updateAssignment_assetNotAvailable_throwException() {
+            // GIVEN
+            Location location = Location
+                    .builder()
+                    .name("HCM")
+                    .build();
+
+            Asset asset1 = Asset.builder()
+                    .id(2L)
+                    .name("Asset1")
+                    .state(EAssetState.ASSIGNED)
+                    .installDate(LocalDate.now())
+                    .specification("Specification")
+                    .location(location)
+                    .build();
+            assignment.setState(EAssignmentState.WAITING);
+            assignmentUpdateDto.setAssetId(asset1.getId());
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+            when(assetRepository.findById(2L)).thenReturn(Optional.of(asset1));
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_STATE_NOT_AVAILABLE);
+        }
+
+        @Test
+        void updateAssignment_invalidAssetLocation_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            Location loc = Location.builder().name("Ha Noi").build();
+            asset.setLocation(loc);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_LOCATION_INVALID_WITH_ADMIN);
+        }
+
+        @Test
+        void updateAssignment_invalidUserLocation_throwException() {
+            // GIVEN
+            assignment.setState(EAssignmentState.WAITING);
+            Location loc = Location.builder().name("Ha Noi").build();
+            user2.setLocation(loc);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.updateAssignment(1L, assignmentUpdateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_LOCATION_INVALID_WITH_ADMIN);
+        }
+
+        @Test
+        void getAssignment_invalidAssignmentId_throwException() {
+            // GIVEN
+            when(assignmentRepository.findById(any())).thenReturn(Optional.empty());
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.getAssignment(1L);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_NOT_FOUND);
         }
     }
 }
