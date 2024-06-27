@@ -70,7 +70,6 @@ public enum ErrorCode {
 
     // Assignment
     ASSIGNMENT_ASSIGNED_DATE_INVALID(1403, "Assignment's assigned date has been now or future", HttpStatus.BAD_REQUEST),
-    // constraint violation
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
             "contains at least 1 uppercase, " +
             "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),

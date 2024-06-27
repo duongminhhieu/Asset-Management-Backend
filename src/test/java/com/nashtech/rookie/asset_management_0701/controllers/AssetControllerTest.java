@@ -148,6 +148,19 @@ class AssetControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message", is("Delete asset successfully")));
         }
+
+        @Test
+        @WithMockUser(roles="ADMIN")
+        void testAssetExistAssignments_validRequest_returnTrue() throws Exception {
+            // GIVEN
+            when(assetService.existAssignments(any())).thenReturn(true);
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assets/exist-assignments/{id}", 1)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result", is(true)));
+        }
     }
 
     @Nested

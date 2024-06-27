@@ -109,14 +109,26 @@ public class AssetServiceImpl implements AssetService {
     @Override
     @Transactional
     public void deleteAsset (Long id) {
+
+        Asset asset = assetRepository.findById(id)
+            .orElseThrow(() -> new AppException(ErrorCode.ASSET_NOT_FOUND));
         if (assignmentRepository.existsByAssetId(id)) {
             throw new AppException(ErrorCode.ASSET_WAS_ASSIGNED);
         }
-        Asset asset = assetRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.ASSET_NOT_FOUND));
+
+        if (assignmentRepository.existsByAssetId(id)) {
+            throw new AppException(ErrorCode.ASSET_WAS_ASSIGNED);
+        }
+
         if (asset.getState().equals(EAssetState.ASSIGNED)) {
             throw new AppException(ErrorCode.ASSET_IS_ASSIGNED);
         }
         assetRepository.delete(asset);
+    }
+
+
+    @Override
+    public boolean existAssignments (Long assetId) {
+        return assignmentRepository.existsByAssetId(assetId);
     }
 }

@@ -199,6 +199,19 @@ class AssetServiceImplTest {
             // Then
             verify(assetRepository, times(1)).delete(asset);
         }
+
+        @Test
+        void tesExistAssignments_validRequest_returnTrue(){
+            // Given
+            given(assignmentRepository.existsByAssetId(1L)).willReturn(true);
+
+            // When
+            boolean result = assetService.existAssignments(1L);
+
+            // Then
+            assertThat(result).isTrue();
+        }
+
     }
 
     @Nested

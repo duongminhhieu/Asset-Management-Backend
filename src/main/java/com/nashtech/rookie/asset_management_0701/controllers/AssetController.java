@@ -61,4 +61,12 @@ public class AssetController {
                 .message("Delete asset successfully")
                 .build();
     }
+
+    @GetMapping("/exist-assignments/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public  APIResponse<Boolean> existAssignments (@PathVariable Long id) {
+        return APIResponse.<Boolean>builder()
+                .result(assetService.existAssignments(id))
+                .build();
+    }
 }

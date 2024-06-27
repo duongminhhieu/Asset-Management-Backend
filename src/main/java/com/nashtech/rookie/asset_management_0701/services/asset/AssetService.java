@@ -13,4 +13,6 @@ public interface AssetService {
     AssetResponseDto getAssetById (Long id);
 
     void deleteAsset (Long id);
+
+    boolean existAssignments (Long assetId);
 }
