@@ -8,7 +8,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.Assign
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = AssetMapper.class)
 public interface AssignmentMapper {
     @Mapping(source = "assignTo.username", target = "assignTo")
     @Mapping(source = "assignBy.username", target = "assignBy")
@@ -25,7 +25,6 @@ public interface AssignmentMapper {
 
     @Mapping(source = "assignTo.username", target = "assignTo")
     @Mapping(source = "assignBy.username", target = "assignBy")
-    @Mapping(source = "asset.name", target = "asset")
     @Mapping(source = "returningRequest.returnDate", target = "returnDate")
     AssignmentResponseDto toAssignmentResponseDto (Assignment assignment);
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.nashtech.rookie.asset_management_0701.dtos.filters.AssignmentFilter;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
@@ -31,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -59,6 +61,7 @@ public class AssignmentServiceImplTest {
     private Assignment assignment;
     private User user1;
     private User user2;
+    private AssignmentFilter assignmentFilter;
 
     @BeforeEach
     void setUp() {
@@ -104,6 +107,12 @@ public class AssignmentServiceImplTest {
         assignmentCreateDto = AssignmentCreateDto.builder()
                 .userId(1L)
                 .assetId(1L)
+                .build();
+        assignmentFilter = AssignmentFilter.builder()
+                .orderBy("assignedDate")
+                .sortDir("ASC")
+                .pageSize(20)
+                .pageNumber(1)
                 .build();
     }
 
@@ -153,6 +162,22 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(asset.getState()).isEqualTo(EAssetState.AVAILABLE);
+        }
+
+        @Test
+        @WithMockUser(username = "abc.com", roles = "ADMIN")
+        void testGetAllAssignments_validRequest_returnPaginationAssignments() {
+            // Given
+            var pageRequest = PageRequest.of(0, 20);
+            var resultPage = new PageImpl<>(List.of(assignment), pageRequest, 1);
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(assignmentRepository.findAllByAssignToId(any(), any())).thenReturn(resultPage);
+
+            // When
+            PaginationResponse<AssignmentResponseDto> paginationResponse =  assignmentService.getAllAssignments(assignmentFilter);
+
+            // Then
+            assertThat(paginationResponse.getData().getFirst().getAssignedDate()).isEqualTo(assignment.getAssignedDate());
         }
     }
 

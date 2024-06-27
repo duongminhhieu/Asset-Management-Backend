@@ -14,7 +14,6 @@ import java.util.Optional;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
-import com.nashtech.rookie.asset_management_0701.utils.user.UserUtilImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

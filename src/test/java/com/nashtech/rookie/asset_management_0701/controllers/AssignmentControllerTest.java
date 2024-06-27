@@ -149,6 +149,29 @@ class AssignmentControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message", is("Assignment deleted successfully")));
         }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void getAllAssignments_validRequest_success() throws Exception {
+            // Given
+            PaginationResponse<AssignmentResponseDto> assetPagination = PaginationResponse.<AssignmentResponseDto>builder()
+                    .total(1L)
+                    .page(1)
+                    .itemsPerPage(10)
+                    .data(Collections.singletonList(assignmentResponseDto))
+                    .build();
+            when(assignmentService.getAllAssignments(any())).thenReturn(assetPagination);
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .param("orderBy", "assignedDate")
+                            .param("sortDir", "ASC")
+                            .param("pageSize", "10")
+                            .param("pageNumber", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.data", hasSize(1)));
+        }
     }
 
     @Nested

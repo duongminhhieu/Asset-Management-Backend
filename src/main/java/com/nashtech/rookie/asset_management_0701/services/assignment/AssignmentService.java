@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.services.assignment;
 
+import com.nashtech.rookie.asset_management_0701.dtos.filters.AssignmentFilter;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
@@ -11,4 +12,5 @@ public interface AssignmentService {
     void deleteAssignment (Long id);
 
     AssignmentResponseDto createAssignment (AssignmentCreateDto assignmentCreateDto);
+    PaginationResponse<AssignmentResponseDto> getAllAssignments (AssignmentFilter assignmentFilter);
 }

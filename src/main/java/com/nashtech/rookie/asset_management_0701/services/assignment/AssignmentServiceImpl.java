@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nashtech.rookie.asset_management_0701.dtos.filters.AssignmentFilter;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.assignment.AssignmentCreateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
@@ -102,5 +103,21 @@ public class AssignmentServiceImpl implements AssignmentService {
         Assignment savedAssignment = assignmentRepository.save(assignment);
         assetRepository.save(asset);
         return assignmentMapper.toAssignmentResponseDto(savedAssignment);
+    }
+
+    @Override
+    public PaginationResponse<AssignmentResponseDto> getAllAssignments (AssignmentFilter assignmentFilter) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "assignedDate");
+        Pageable pageable = PageSortUtil.createPageRequest(assignmentFilter.getPageNumber(),
+                assignmentFilter.getPageSize(), sort);
+        Page<Assignment> assignments = assignmentRepository.findAllByAssignToId(
+                authUtil.getCurrentUser().getId(), pageable);
+
+        return PaginationResponse.<AssignmentResponseDto>builder()
+                .page(pageable.getPageNumber() + 1)
+                .total(assignments.getTotalElements())
+                .itemsPerPage(pageable.getPageSize())
+                .data(assignments.map(assignmentMapper::toAssignmentResponseDto).toList())
+                .build();
     }
 }
