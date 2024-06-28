@@ -33,8 +33,6 @@ public class AssignmentCreateDto {
     @FieldNotEmptyConstraint(field = "assignDate", message = "FIELD_NOT_EMPTY")
     LocalDate assignedDate;
 
-    @FieldNotNullConstraint(field = "note", message = "FIELD_NOT_NULL")
-    @FieldNotEmptyConstraint(field = "note", message = "FIELD_NOT_EMPTY")
     @Size(max = 1024)
     String note;
 }
