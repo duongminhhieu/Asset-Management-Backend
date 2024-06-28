@@ -5,6 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,6 +23,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationRespon
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import com.nashtech.rookie.asset_management_0701.services.assignment.AssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +100,15 @@ public class AssignmentController {
         @Valid @ModelAttribute AssignmentFilter filter){
         return APIResponse.<PaginationResponse<AssignmentResponseDto>>builder()
                 .result(assignmentService.getAllAssignments(filter))
+                .build();
+    }
+
+    @PatchMapping("/{id}")
+    public APIResponse<AssignmentResponseDto> changeAssignmentState (
+            @PathVariable Long id,
+            @RequestParam("state") EAssignmentState state) {
+        return APIResponse.<AssignmentResponseDto>builder()
+                .result(assignmentService.changeState(id, state))
                 .build();
     }
 }

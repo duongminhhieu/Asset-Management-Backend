@@ -33,7 +33,6 @@ import com.nashtech.rookie.asset_management_0701.utils.PageSortUtil;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import lombok.RequiredArgsConstructor;
 
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -85,6 +84,21 @@ public class AssignmentServiceImpl implements AssignmentService {
         asset.setState(EAssetState.AVAILABLE);
         assetRepository.save(asset);
         assignmentRepository.delete(assignment);
+    }
+
+    @Override
+    @Transactional
+    public AssignmentResponseDto changeState (Long assignmentId, EAssignmentState state) {
+        Assignment assignment = assignmentRepository.findByIdAndAssignToUsername(
+                assignmentId, authUtil.getCurrentUserName())
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+        switch (state) {
+            case EAssignmentState.ACCEPTED -> assignment.setState(EAssignmentState.ACCEPTED);
+            case EAssignmentState.DECLINED -> assignment.setState(EAssignmentState.DECLINED);
+            default -> assignment.setState(EAssignmentState.WAITING);
+        }
+        return assignmentMapper.toAssignmentResponseDto(assignment);
     }
 
     @Override
@@ -181,7 +195,6 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new AppException(ErrorCode.ASSET_LOCATION_INVALID_WITH_ADMIN);
         }
     }
-
     public PaginationResponse<AssignmentResponseDto> getMyAssignments (AssignmentFilter assignmentFilter) {
         Sort sort = Sort.by(PageSortUtil.parseSortDirection(assignmentFilter.getSortDir()),
                 sortBy.get(assignmentFilter.getOrderBy()));
@@ -206,13 +219,13 @@ public class AssignmentServiceImpl implements AssignmentService {
         Location currentLocation = authUtil.getCurrentUser().getLocation();
 
         Page<Assignment> assignments = assignmentRepository.findAll(
-            Specification.where(AssignmentSpecification.hasAssetName(filter.getSearchString())
-            .or(AssignmentSpecification.hasAssetCode(filter.getSearchString()))
-            .or(AssignmentSpecification.hasAssigneeUsernane(filter.getSearchString()))
-            .and(AssignmentSpecification.hasStates(filter.getStates()))
-            .and(AssignmentSpecification.assignOnDate(filter.getAssignDate()))
-            .and(AssignmentSpecification.hasLocation(currentLocation)))
-            , pageable);
+                Specification.where(AssignmentSpecification.hasAssetName(filter.getSearchString())
+                        .or(AssignmentSpecification.hasAssetCode(filter.getSearchString()))
+                        .or(AssignmentSpecification.hasAssigneeUsernane(filter.getSearchString()))
+                        .and(AssignmentSpecification.hasStates(filter.getStates()))
+                        .and(AssignmentSpecification.assignOnDate(filter.getAssignDate()))
+                        .and(AssignmentSpecification.hasLocation(currentLocation)))
+                , pageable);
 
         return PaginationResponse.<AssignmentResponseDto>builder()
                 .page(pageable.getPageNumber() + 1)

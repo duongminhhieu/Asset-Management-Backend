@@ -67,13 +67,13 @@ public enum ErrorCode {
     // Assignment
     ASSIGNMENT_NOT_FOUND(1401, "Assignment not found", HttpStatus.NOT_FOUND),
     ASSIGNMENT_CANNOT_DELETE(1402, "Only can delete assignments that have state is WAITING", HttpStatus.BAD_REQUEST),
-
-    // Assignment
     ASSIGNMENT_ASSIGNED_DATE_INVALID(1403, "Assignment's assigned date has been now or future", HttpStatus.BAD_REQUEST),
     ASSIGMENT_CANNOT_UPDATE(1404, "Assignment can't be updated", HttpStatus.BAD_REQUEST),
     ASSIGMENT_NOT_BELONG_TO_YOU(1405, "Assignment's not belong to you", HttpStatus.BAD_REQUEST),
 
     // constraint violation
+
+
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
             "contains at least 1 uppercase, " +
             "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),

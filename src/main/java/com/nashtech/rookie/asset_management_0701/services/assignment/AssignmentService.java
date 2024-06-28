@@ -7,11 +7,13 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationRespon
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentHistory;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 
 public interface AssignmentService {
     PaginationResponse<AssignmentHistory> getAssignmentHistory (Long assetId, Integer page, Integer size);
 
     void deleteAssignment (Long id);
+    AssignmentResponseDto changeState (Long assignmentId, EAssignmentState state);
 
     PaginationResponse<AssignmentResponseDto> getMyAssignments (AssignmentFilter assignmentFilter);
 

@@ -36,8 +36,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -176,26 +178,6 @@ class AssignmentControllerTest {
 
         @Test
         @WithMockUser(username = "admin", roles = {"ADMIN"})
-        void getMyAssignments_validRequest_success() throws Exception {
-            // Given
-            PaginationResponse<AssignmentResponseDto> assetPagination = PaginationResponse.<AssignmentResponseDto>builder()
-                    .total(1L)
-                    .page(1)
-                    .itemsPerPage(10)
-                    .data(Collections.singletonList(assignmentResponseDto))
-                    .build();
-            when(assignmentService.getMyAssignments(any())).thenReturn(assetPagination);
-
-            // WHEN THEN
-            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments/me")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .param("orderBy", "assignedDate")
-                            .param("sortDir", "ASC")
-                            .param("pageSize", "10")
-                            .param("pageNumber", "1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.result.data", hasSize(1)));
-                }
         void updateAssignment_validRequest_success() throws Exception {
             // GIVEN
             Long assignmentId = 1L;
@@ -227,7 +209,7 @@ class AssignmentControllerTest {
 
         @Test
         @WithMockUser(username = "admin", roles = {"ADMIN"})
-        void getAllAssignments_validRequest_success() throws Exception {
+        void getMyAssignments_validRequest_success() throws Exception {
             // Given
             PaginationResponse<AssignmentResponseDto> assetPagination = PaginationResponse.<AssignmentResponseDto>builder()
                     .total(1L)
@@ -235,10 +217,10 @@ class AssignmentControllerTest {
                     .itemsPerPage(10)
                     .data(Collections.singletonList(assignmentResponseDto))
                     .build();
-            when(assignmentService.getAllAssignments(any())).thenReturn(assetPagination);
+            when(assignmentService.getMyAssignments(any())).thenReturn(assetPagination);
 
             // WHEN THEN
-            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments")
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments/me")
                             .contentType(MediaType.APPLICATION_JSON)
                             .param("orderBy", "assignedDate")
                             .param("sortDir", "ASC")
@@ -246,6 +228,25 @@ class AssignmentControllerTest {
                             .param("pageNumber", "1"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.data", hasSize(1)));
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void changeAssignmentState_validRequest_success() throws Exception {
+            // GIVEN
+            Long assignmentId = 1L;
+            assignmentResponseDto.setState(EAssignmentState.ACCEPTED);
+
+            when(assignmentService.changeState(assignmentId, EAssignmentState.ACCEPTED)).thenReturn(assignmentResponseDto);
+
+            mockMvc.perform(patch("/api/v1/assignments/{id}", assignmentId)
+                            .param("state", "ACCEPTED")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(content().json("{\"result\": {}}"))
+                    .andExpect(jsonPath("$.result.state").value("ACCEPTED"));
+
         }
     }
 

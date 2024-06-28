@@ -2,9 +2,12 @@ package com.nashtech.rookie.asset_management_0701.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.nashtech.rookie.asset_management_0701.dtos.filters.AssignmentFilter;
@@ -275,6 +278,56 @@ public class AssignmentServiceImplTest {
             // Then
             assertThat(paginationResponse.getData().getFirst().getAssignedDate()).isEqualTo(assignment.getAssignedDate());
         }
+
+        @Test
+        @WithMockUser(username = "testUser")
+        void testChangeState_validRequest_returnAssignmentStateAccepted() {
+            // Given
+            assignment.setState(EAssignmentState.WAITING);
+            when(authUtil.getCurrentUserName()).thenReturn("testUser");
+            when(assignmentRepository.findByIdAndAssignToUsername(1L, "testUser"))
+                    .thenReturn(Optional.of(assignment));
+
+            // When
+            AssignmentResponseDto responseDto = assignmentService.changeState(1L, EAssignmentState.ACCEPTED);
+
+            // Then
+            verify(assignmentRepository).findByIdAndAssignToUsername(1L, "testUser");
+            assertThat(responseDto.getState()).isEqualTo(EAssignmentState.ACCEPTED);
+        }
+
+        @Test
+        @WithMockUser(username = "testUser")
+        void testChangeState_validRequest_returnAssignmentStateDeclined() {
+            // Given
+            assignment.setState(EAssignmentState.WAITING);
+            when(authUtil.getCurrentUserName()).thenReturn("testUser");
+            when(assignmentRepository.findByIdAndAssignToUsername(1L, "testUser"))
+                    .thenReturn(Optional.of(assignment));
+
+            // When
+            AssignmentResponseDto responseDto = assignmentService.changeState(1L, EAssignmentState.DECLINED);
+
+            // Then
+            verify(assignmentRepository).findByIdAndAssignToUsername(1L, "testUser");
+            assertThat(responseDto.getState()).isEqualTo(EAssignmentState.DECLINED);
+        }
+
+        @Test
+        @WithMockUser(username = "testUser")
+        void testChangeState_validRequest_returnAssignmentStateWaitingDefault() {
+            // Given
+            when(authUtil.getCurrentUserName()).thenReturn("testUser");
+            when(assignmentRepository.findByIdAndAssignToUsername(1L, "testUser"))
+                    .thenReturn(Optional.of(assignment));
+
+            // When
+            AssignmentResponseDto responseDto = assignmentService.changeState(1L, EAssignmentState.WAITING);
+
+            // Then
+            verify(assignmentRepository).findByIdAndAssignToUsername(1L, "testUser");
+            assertThat(responseDto.getState()).isEqualTo(EAssignmentState.WAITING);
+        }
     }
 
 
@@ -410,6 +463,20 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_CANNOT_DELETE);
+        }
+
+        @Test
+        @WithMockUser(username = "testUser")
+        void testAssignmentNotFound() {
+            when(authUtil.getCurrentUserName()).thenReturn("testUser");
+            when(assignmentRepository.findByIdAndAssignToUsername(1L, "testUser"))
+                    .thenReturn(Optional.empty());
+
+            AppException exception = assertThrows(AppException.class, () -> {
+                assignmentService.changeState(1L, EAssignmentState.ACCEPTED);
+            });
+
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ASSIGNMENT_NOT_FOUND);
         }
 
         @Test
