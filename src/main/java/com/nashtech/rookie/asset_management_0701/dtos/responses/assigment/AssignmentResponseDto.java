@@ -33,5 +33,7 @@ public class AssignmentResponseDto {
     private String assignBy;
 
     private AssetResponseDto asset;
+
     private LocalDate returnDate;
+
 }

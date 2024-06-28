@@ -13,10 +13,13 @@ public interface AssignmentService {
 
     void deleteAssignment (Long id);
 
+    PaginationResponse<AssignmentResponseDto> getMyAssignments (AssignmentFilter assignmentFilter);
+
     AssignmentResponseDto createAssignment (AssignmentCreateDto assignmentCreateDto);
 
     AssignmentResponseDto updateAssignment (Long id, AssignmentUpdateDto assignmentUpdateDto);
 
     AssignmentResponse getAssignment (Long id);
+
     PaginationResponse<AssignmentResponseDto> getAllAssignments (AssignmentFilter assignmentFilter);
 }

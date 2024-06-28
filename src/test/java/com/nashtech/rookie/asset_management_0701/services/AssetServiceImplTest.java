@@ -151,7 +151,7 @@ class AssetServiceImplTest {
 
         @Test
         @WithMockUser(username = "username", roles = "ADMIN")
-        void testGetAllAssets_validRequest_returnPagination() {
+        void testGetAllAssets_validRequest_returnPagination () {
             // Given
             given(authUtil.getCurrentUser()).willReturn(user);
             category.setId(1L);
@@ -246,7 +246,7 @@ class AssetServiceImplTest {
 
         @Test
         @WithMockUser(username = "username", roles = "ADMIN")
-        void testGetAllAssets_invalidCategoryIds_returnException() {
+        void testGetAllAssets_invalidCategoryIds_returnException () {
             // Given
             given(authUtil.getCurrentUser()).willReturn(user);
             category.setId(1L);
@@ -263,7 +263,7 @@ class AssetServiceImplTest {
         }
 
         @Test
-        void testGetAssetById_invalidId_returnException() {
+        void testGetAssetById_invalidId_returnException () {
             // Given
             given(assetRepository.findById(1L)).willReturn(Optional.empty());
 

@@ -1,8 +1,12 @@
 package com.nashtech.rookie.asset_management_0701.services.assignment;
 
+import java.time.LocalDate;
+import java.util.Map;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +19,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.Assign
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
+import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
@@ -33,19 +38,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AssignmentServiceImpl implements AssignmentService {
-
+    private static final String ASSIGNED_DATE = "assignedDate";
     private final AssetRepository assetRepository;
     private final AssignmentRepository assignmentRepository;
     private final AssignmentMapper assignmentMapper;
     private final UserRepository userRepository;
     private final AuthUtil authUtil;
+    private final Map<String, String> sortBy = Map.ofEntries(
+        Map.entry("assetName", "asset_name"),
+        Map.entry("assetCode", "asset_assetCode"),
+        Map.entry("assignedTo", "assignTo_username"),
+        Map.entry("assignedBy", "assignBy_username"),
+        Map.entry(ASSIGNED_DATE, ASSIGNED_DATE),
+        Map.entry("state", "state"),
+        Map.entry("category", "asset_category_name")
+    );
 
     @Override
     public PaginationResponse<AssignmentHistory> getAssignmentHistory (Long assetId, Integer page, Integer size) {
         Asset asset = assetRepository.findById(assetId)
                 .orElseThrow(() -> new AppException(ErrorCode.ASSET_NOT_FOUND));
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "assignedDate");
+        Sort sort = Sort.by(Sort.Direction.DESC, ASSIGNED_DATE);
         Pageable pageable = PageSortUtil.createPageRequest(page, size, sort);
 
         Page<Assignment> assignments = assignmentRepository.findAllByAsset(asset, pageable);
@@ -168,13 +182,37 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
     }
 
-    @Override
-    public PaginationResponse<AssignmentResponseDto> getAllAssignments (AssignmentFilter assignmentFilter) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "assignedDate");
+    public PaginationResponse<AssignmentResponseDto> getMyAssignments (AssignmentFilter assignmentFilter) {
+        Sort sort = Sort.by(PageSortUtil.parseSortDirection(assignmentFilter.getSortDir()),
+                sortBy.get(assignmentFilter.getOrderBy()));
         Pageable pageable = PageSortUtil.createPageRequest(assignmentFilter.getPageNumber(),
                 assignmentFilter.getPageSize(), sort);
-        Page<Assignment> assignments = assignmentRepository.findAllByAssignToId(
-                authUtil.getCurrentUser().getId(), pageable);
+        LocalDate currentDate = LocalDate.now();
+        Page<Assignment> assignments = assignmentRepository.findAllByAssignToIdAndAssignedDateLessThanEqual(
+                authUtil.getCurrentUser().getId(), currentDate, pageable);
+
+        return PaginationResponse.<AssignmentResponseDto>builder()
+                .page(pageable.getPageNumber() + 1)
+                .total(assignments.getTotalElements())
+                .itemsPerPage(pageable.getPageSize())
+                .data(assignments.map(assignmentMapper::toAssignmentResponseDto).toList())
+                .build();
+    }
+
+    public PaginationResponse<AssignmentResponseDto> getAllAssignments (AssignmentFilter filter) {
+        Sort sort = Sort.by(PageSortUtil.parseSortDirection(filter.getSortDir()), sortBy.get(filter.getOrderBy()));
+        Pageable pageable = PageSortUtil.createPageRequest(filter.getPageNumber()
+                , filter.getPageSize(), sort);
+        Location currentLocation = authUtil.getCurrentUser().getLocation();
+
+        Page<Assignment> assignments = assignmentRepository.findAll(
+            Specification.where(AssignmentSpecification.hasAssetName(filter.getSearchString())
+            .or(AssignmentSpecification.hasAssetCode(filter.getSearchString()))
+            .or(AssignmentSpecification.hasAssigneeUsernane(filter.getSearchString()))
+            .and(AssignmentSpecification.hasStates(filter.getStates()))
+            .and(AssignmentSpecification.assignOnDate(filter.getAssignDate()))
+            .and(AssignmentSpecification.hasLocation(currentLocation)))
+            , pageable);
 
         return PaginationResponse.<AssignmentResponseDto>builder()
                 .page(pageable.getPageNumber() + 1)

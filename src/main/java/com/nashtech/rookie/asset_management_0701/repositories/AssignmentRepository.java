@@ -1,5 +1,7 @@
 package com.nashtech.rookie.asset_management_0701.repositories;
 
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +16,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long>, J
     Page<Assignment> findAllByAsset (Asset asset, Pageable pageable);
 
     boolean existsByAssetId (Long assetId);
-    Page<Assignment> findAllByAssignToId (Long assignTo, Pageable pageable);
+    Page<Assignment> findAllByAssignToIdAndAssignedDateLessThanEqual (Long assignToId,
+                                                                      LocalDate assignedDate,
+                                                                      Pageable pageable);
 }

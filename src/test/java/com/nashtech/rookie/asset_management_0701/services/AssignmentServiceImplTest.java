@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 
 import com.nashtech.rookie.asset_management_0701.dtos.filters.AssignmentFilter;
@@ -26,19 +27,25 @@ import com.nashtech.rookie.asset_management_0701.repositories.AssignmentReposito
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.services.assignment.AssignmentServiceImpl;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @SpringBootTest
 public class AssignmentServiceImplTest {
@@ -67,7 +74,7 @@ public class AssignmentServiceImplTest {
     private AssignmentFilter assignmentFilter;
 
     @BeforeEach
-    void setUp() {
+    void setUp () {
 
         Location location = Location
                 .builder()
@@ -116,7 +123,10 @@ public class AssignmentServiceImplTest {
                 .assetId(1L)
                 .build();
         assignmentFilter = AssignmentFilter.builder()
-                .orderBy("assignedDate")
+                .searchString("")
+                .states(Set.of())
+                .assignDate(LocalDate.of(2024, 9, 10))
+                .orderBy("assetName")
                 .sortDir("ASC")
                 .pageSize(20)
                 .pageNumber(1)
@@ -172,6 +182,53 @@ public class AssignmentServiceImplTest {
         }
 
         @Test
+        @WithMockUser(username = "User1", roles = "ADMIN")
+        void testGetAllAssignMent_validRequest_success (){
+            // GIVEN
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            var pageRequest = PageRequest.of(0, 20, Sort.Direction.ASC, "asset_name");
+            Page<Assignment> assignments = new PageImpl<Assignment>(List.of(assignment), pageRequest, 1L);
+            given(assignmentRepository.findAll(any(Specification.class), any(Pageable.class))).willReturn(assignments);
+
+            // WHEN
+            var result = assignmentService.getAllAssignments(assignmentFilter);
+
+            // THEN
+            assertThat(result)
+                .hasFieldOrPropertyWithValue("page", 1)
+                .hasFieldOrPropertyWithValue("total", 1L)
+                .hasFieldOrPropertyWithValue("itemsPerPage", 20);
+            assertThat(result.getData()).hasSize(1);
+        }
+
+        @Test
+        @WithMockUser(username = "User1", roles = "ADMIN")
+        void testGetAllAssignMent_nullFilterRequest_success (){
+            // GIVEN
+            assignmentFilter = AssignmentFilter.builder()
+                .searchString(null)
+                .states(null)
+                .assignDate(null)
+                .orderBy("assetName")
+                .sortDir("ASC")
+                .pageSize(20)
+                .pageNumber(1)
+                .build();
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            var pageRequest = PageRequest.of(0, 20, Sort.Direction.ASC, "asset_name");
+            Page<Assignment> assignments = new PageImpl<Assignment>(List.of(assignment), pageRequest, 1L);
+            given(assignmentRepository.findAll(any(Specification.class), any(Pageable.class))).willReturn(assignments);
+
+            // WHEN
+            var result = assignmentService.getAllAssignments(assignmentFilter);
+
+            // THEN
+            assertThat(result)
+                .hasFieldOrPropertyWithValue("page", 1)
+                .hasFieldOrPropertyWithValue("total", 1L)
+                .hasFieldOrPropertyWithValue("itemsPerPage", 20);
+            assertThat(result.getData()).hasSize(1);
+        }
         void updateAssignment_validRequest_returnAssignmentResponseDto() {
             // GIVEN
             assignment.setState(EAssignmentState.WAITING);
@@ -205,15 +262,15 @@ public class AssignmentServiceImplTest {
 
         @Test
         @WithMockUser(username = "abc.com", roles = "ADMIN")
-        void testGetAllAssignments_validRequest_returnPaginationAssignments() {
+        void testGetMyAssignments_validRequest_returnPaginationAssignments() {
             // Given
             var pageRequest = PageRequest.of(0, 20);
             var resultPage = new PageImpl<>(List.of(assignment), pageRequest, 1);
             when(authUtil.getCurrentUser()).thenReturn(user1);
-            when(assignmentRepository.findAllByAssignToId(any(), any())).thenReturn(resultPage);
+            when(assignmentRepository.findAllByAssignToIdAndAssignedDateLessThanEqual(any(), any(), any())).thenReturn(resultPage);
 
             // When
-            PaginationResponse<AssignmentResponseDto> paginationResponse =  assignmentService.getAllAssignments(assignmentFilter);
+            PaginationResponse<AssignmentResponseDto> paginationResponse =  assignmentService.getMyAssignments(assignmentFilter);
 
             // Then
             assertThat(paginationResponse.getData().getFirst().getAssignedDate()).isEqualTo(assignment.getAssignedDate());

@@ -84,11 +84,20 @@ public class AssignmentController {
                 .message("Assignment deleted successfully")
                 .build();
     }
-    @GetMapping
-    public APIResponse<PaginationResponse<AssignmentResponseDto>> getAllAssignments (
+    @GetMapping("/me")
+    public APIResponse<PaginationResponse<AssignmentResponseDto>> getMyAssignments (
             @Valid @ModelAttribute AssignmentFilter assignmentFilter){
         return APIResponse.<PaginationResponse<AssignmentResponseDto>>builder()
-                .result(assignmentService.getAllAssignments(assignmentFilter))
+                .result(assignmentService.getMyAssignments(assignmentFilter))
+                .build();
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<PaginationResponse<AssignmentResponseDto>> getAllAssignment (
+        @Valid @ModelAttribute AssignmentFilter filter){
+        return APIResponse.<PaginationResponse<AssignmentResponseDto>>builder()
+                .result(assignmentService.getAllAssignments(filter))
                 .build();
     }
 }

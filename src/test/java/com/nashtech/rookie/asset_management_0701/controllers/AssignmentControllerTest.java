@@ -176,6 +176,26 @@ class AssignmentControllerTest {
 
         @Test
         @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void getMyAssignments_validRequest_success() throws Exception {
+            // Given
+            PaginationResponse<AssignmentResponseDto> assetPagination = PaginationResponse.<AssignmentResponseDto>builder()
+                    .total(1L)
+                    .page(1)
+                    .itemsPerPage(10)
+                    .data(Collections.singletonList(assignmentResponseDto))
+                    .build();
+            when(assignmentService.getMyAssignments(any())).thenReturn(assetPagination);
+
+            // WHEN THEN
+            mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/assignments/me")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .param("orderBy", "assignedDate")
+                            .param("sortDir", "ASC")
+                            .param("pageSize", "10")
+                            .param("pageNumber", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.data", hasSize(1)));
+                }
         void updateAssignment_validRequest_success() throws Exception {
             // GIVEN
             Long assignmentId = 1L;
