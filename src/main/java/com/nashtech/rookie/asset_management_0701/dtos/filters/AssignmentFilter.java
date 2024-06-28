@@ -27,7 +27,7 @@ public class AssignmentFilter {
 
     LocalDate assignDate;
 
-    @Pattern(regexp = "assetName|assetCode|assignedTo|assignedBy|assignedDate|state|category",
+    @Pattern(regexp = "id|assetName|assetCode|assignedTo|assignedBy|assignedDate|state|category",
         message = "INVALID_SORT_FIELD")
     @Builder.Default
     String orderBy = "assetName";

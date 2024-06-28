@@ -116,10 +116,6 @@ public class AssetServiceImpl implements AssetService {
             throw new AppException(ErrorCode.ASSET_WAS_ASSIGNED);
         }
 
-        if (assignmentRepository.existsByAssetId(id)) {
-            throw new AppException(ErrorCode.ASSET_WAS_ASSIGNED);
-        }
-
         if (asset.getState().equals(EAssetState.ASSIGNED)) {
             throw new AppException(ErrorCode.ASSET_IS_ASSIGNED);
         }

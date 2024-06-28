@@ -276,6 +276,20 @@ class AssetServiceImplTest {
                     .hasMessageContaining(ErrorCode.ASSET_NOT_FOUND.getMessage());
         }
         @Test
+        void testDeleteAssset_InvalidID_returnException(){
+            // Given
+            given(assetRepository.findById(1L)).willReturn(Optional.ofNullable(null));
+
+            // When
+            assertThrows(AppException.class, () -> assetService.deleteAsset(1L));
+
+            // Then
+            assertThatThrownBy(()-> assetService.deleteAsset(1L))
+                    .isInstanceOf(AppException.class)
+                    .hasMessageContaining(ErrorCode.ASSET_NOT_FOUND.getMessage());
+        }
+
+        @Test
         void testDeleteAssset_AssetAssigned_returnException(){
             // Given
             asset.setState(EAssetState.ASSIGNED);

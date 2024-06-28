@@ -50,6 +50,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         Map.entry("assignedBy", "assignBy_username"),
         Map.entry(ASSIGNED_DATE, ASSIGNED_DATE),
         Map.entry("state", "state"),
+        Map.entry("id", "id"),
         Map.entry("category", "asset_category_name")
     );
 
