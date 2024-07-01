@@ -50,6 +50,6 @@ public class Assignment extends AuditEntity<String> {
     @ManyToOne
     private Asset asset;
 
-    @OneToOne
+    @OneToOne(mappedBy = "assignment")
     private ReturningRequest returningRequest;
 }

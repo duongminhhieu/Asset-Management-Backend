@@ -55,6 +55,7 @@ public enum ErrorCode {
     CATEGORY_PREFIX_ALREADY_EXISTED(1202, "Prefix is already existed. Please enter a different prefix"
             , HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(1203, "Category not found", HttpStatus.NOT_FOUND),
+
     // Asset
     ASSET_INSTALLED_DATE_TOO_OLD(1301, "Asset installed date is no longer than 3 months ago", HttpStatus.BAD_REQUEST),
     ASSET_NOT_FOUND(1302, "Asset not found", HttpStatus.NOT_FOUND),
@@ -71,9 +72,11 @@ public enum ErrorCode {
     ASSIGMENT_CANNOT_UPDATE(1404, "Assignment can't be updated", HttpStatus.BAD_REQUEST),
     ASSIGMENT_NOT_BELONG_TO_YOU(1405, "Assignment's not belong to you", HttpStatus.BAD_REQUEST),
 
+    // returning request
+    RETURNING_REQUEST_NOT_FOUND(1501, "Returning request not found", HttpStatus.NOT_FOUND),
+    RETURNING_REQUEST_STATE_INVALID(1502, "Returning request state is invalid", HttpStatus.BAD_REQUEST),
+
     // constraint violation
-
-
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
             "contains at least 1 uppercase, " +
             "1 lowercase, 1 special characters, 1 number", HttpStatus.BAD_REQUEST),
