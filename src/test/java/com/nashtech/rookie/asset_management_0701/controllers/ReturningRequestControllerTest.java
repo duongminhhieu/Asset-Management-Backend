@@ -1,17 +1,18 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.asset.AssetResponseDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.assigment.AssignmentResponseDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.returning_request.ReturningRequestResponseDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserResponse;
+import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentReturnState;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.entities.Asset;
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
 import com.nashtech.rookie.asset_management_0701.entities.ReturningRequest;
 import com.nashtech.rookie.asset_management_0701.entities.User;
-import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
-import com.nashtech.rookie.asset_management_0701.enums.EAssignmentReturnState;
-import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import com.nashtech.rookie.asset_management_0701.services.returning_request.ReturningRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -24,17 +25,17 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
 import java.time.LocalDate;
 import java.util.Collections;
 
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -49,27 +50,37 @@ public class ReturningRequestControllerTest {
     @MockBean
     private ReturningRequestService returningRequestService;
 
-    private User user;
-    private UserResponse userResponse;
-    private Asset asset;
-    private Assignment assignment;
-    private AssignmentResponseDto assignmentResponseDto;
-    private ReturningRequest returningRequest;
     private ReturningRequestResponseDto returningRequestResponseDto;
 
     @BeforeEach
     void setUp() {
+        AssignmentResponseDto assignmentResponseDto;
 
-        user = User.builder()
+        AssignmentResponseDto.builder()
+                .id(1L)
+                .asset(AssetResponseDto.builder()
+                        .id("1")
+                        .name("Asset1")
+                        .state(EAssetState.AVAILABLE)
+                        .installDate(LocalDate.now())
+                        .specification("Specification")
+                        .build())
+                .assignedDate(LocalDate.now())
+                .assignTo("User1")
+                .assignBy("User2")
+                .state(EAssignmentState.ACCEPTED)
+                .build();
+
+        User user = User.builder()
                 .id(1L)
                 .build();
 
-        asset = Asset.builder()
+        Asset asset = Asset.builder()
                 .id(1L)
                 .state(EAssetState.AVAILABLE)
                 .build();
 
-        assignment = Assignment.builder()
+        Assignment assignment = Assignment.builder()
                 .id(1L)
                 .state(EAssignmentState.WAITING)
                 .assignedDate(LocalDate.now())
@@ -78,7 +89,7 @@ public class ReturningRequestControllerTest {
                 .asset(asset)
                 .build();
 
-        returningRequest = ReturningRequest.builder()
+        ReturningRequest.builder()
                 .id(1L)
                 .requestedBy(user)
                 .acceptedBy(user)
@@ -87,7 +98,7 @@ public class ReturningRequestControllerTest {
                 .state(EAssignmentReturnState.WAITING_FOR_RETURNING)
                 .build();
 
-        userResponse = UserResponse.builder()
+        UserResponse userResponse = UserResponse.builder()
                 .id(1L)
                 .build();
 
@@ -106,10 +117,38 @@ public class ReturningRequestControllerTest {
                 .assignment(assignmentResponseDto)
                 .state(EAssignmentReturnState.WAITING_FOR_RETURNING)
                 .build();
+        returningRequestResponseDto = ReturningRequestResponseDto.builder()
+                .id(1L)
+                .requestedBy(UserResponse.builder()
+                        .id(1L)
+                        .username("User1")
+                        .firstName("User1")
+                        .lastName("User1")
+                        .build())
+                .state(EAssignmentReturnState.WAITING_FOR_RETURNING)
+                .assignment(assignmentResponseDto)
+                .build();
     }
 
     @Nested
     class HappyCase {
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void createReturningRequest_validRequest_success() throws Exception {
+            // Given
+            Long id = 1L;
+            when(returningRequestService.createReturningRequest(1L)).thenReturn(returningRequestResponseDto);
+
+            // When Then
+            mockMvc.perform(post("/api/v1/returning-requests/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.id").value(1L))
+                    .andExpect(jsonPath("$.result.requestedBy.username").value("User1"))
+                    .andExpect(jsonPath("$.result.state").value("WAITING_FOR_RETURNING"))
+                    .andExpect(jsonPath("$.result.assignment.id").value(1L));
+        }
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")

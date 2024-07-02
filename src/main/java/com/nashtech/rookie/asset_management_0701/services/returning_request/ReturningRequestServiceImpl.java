@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nashtech.rookie.asset_management_0701.dtos.filters.ReturningRequestFilter;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.returning_request.ReturningRequestResponseDto;
+import com.nashtech.rookie.asset_management_0701.entities.Assignment;
 import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.ReturningRequest;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
@@ -20,6 +21,7 @@ import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.ReturningRequestMapper;
+import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.ReturningRequestRepository;
 import com.nashtech.rookie.asset_management_0701.utils.PageSortUtil;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
@@ -29,8 +31,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReturningRequestServiceImpl implements ReturningRequestService {
-    private final AuthUtil authUtil;
+    private final AssignmentRepository assignmentRepository;
     private final ReturningRequestRepository returningRequestRepository;
+    private final AuthUtil authUtil;
     private final ReturningRequestMapper returningRequestMapper;
     private final Map<String, String> sortBy = Map.ofEntries(
             Map.entry("assetName", "assignment_asset_name"),
@@ -97,5 +100,24 @@ public class ReturningRequestServiceImpl implements ReturningRequestService {
         }
 
         returningRequestRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public ReturningRequestResponseDto createReturningRequest (Long assignmentId) {
+        Assignment assignment = assignmentRepository.findByIdAndAssignToUsername(assignmentId,
+                        authUtil.getCurrentUserName())
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGMENT_NOT_BELONG_TO_YOU));
+        if (!assignment.getState().equals(EAssignmentState.ACCEPTED)) {
+            throw new AppException(ErrorCode.RETURNING_REQUEST_STATE_INVALID);
+        }
+        if (assignment.getReturningRequest() != null) {
+            throw new AppException(ErrorCode.RETURNING_REQUEST_ALREADY_EXISTS);
+        }
+        ReturningRequest returningRequest = new ReturningRequest();
+        returningRequest.setRequestedBy(authUtil.getCurrentUser());
+        returningRequest.setState(EAssignmentReturnState.WAITING_FOR_RETURNING);
+        returningRequest.setAssignment(assignment);
+        return returningRequestMapper.toReturningRequestDto(returningRequestRepository.save(returningRequest));
     }
 }

@@ -35,5 +35,5 @@ public class AssignmentResponseDto {
     private AssetResponseDto asset;
 
     private LocalDate returnDate;
-
+    private Long returningRequestId;
 }

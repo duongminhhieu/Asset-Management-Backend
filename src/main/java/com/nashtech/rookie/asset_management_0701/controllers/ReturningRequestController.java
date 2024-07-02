@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,6 +44,13 @@ public class ReturningRequestController {
                 .build();
     }
 
+    @PostMapping("/{assignmentId}")
+    public APIResponse<ReturningRequestResponseDto> createReturningRequestAtHomePage (@PathVariable("assignmentId")
+                                                                                          Long assignmentId) {
+        return APIResponse.<ReturningRequestResponseDto>builder()
+                .result(returningRequestService.createReturningRequest(assignmentId))
+                .build();
+    }
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public APIResponse<String> cancelReturningRequest (@PathVariable Long id) {

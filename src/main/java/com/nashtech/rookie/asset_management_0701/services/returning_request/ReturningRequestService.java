@@ -5,6 +5,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationRespon
 import com.nashtech.rookie.asset_management_0701.dtos.responses.returning_request.ReturningRequestResponseDto;
 
 public interface ReturningRequestService {
+    ReturningRequestResponseDto createReturningRequest (Long assignmentId);
 
     PaginationResponse<ReturningRequestResponseDto> getAllReturningRequests (
             ReturningRequestFilter returningRequestFilter);

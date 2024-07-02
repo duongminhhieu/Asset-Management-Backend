@@ -30,6 +30,7 @@ public interface AssignmentMapper {
     @Mapping(source = "assignTo.username", target = "assignTo")
     @Mapping(source = "assignBy.username", target = "assignBy")
     @Mapping(source = "returningRequest.returnDate", target = "returnDate")
+    @Mapping(source = "returningRequest.id", target = "returningRequestId")
     AssignmentResponseDto toAssignmentResponseDto (Assignment assignment);
 
     @Mapping(source = "returningRequest.returnDate", target = "returnDate")
@@ -41,5 +42,9 @@ public interface AssignmentMapper {
     @Mapping(target = "assignBy", ignore = true)
     @Mapping(target = "state", ignore = true)
     @Mapping(target = "returningRequest", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
     Assignment updateEntity (@MappingTarget Assignment entity, AssignmentUpdateDto dto);
 }
