@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -218,6 +219,17 @@ public class UserControllerTest {
             mockMvc.perform(get("/api/v1/users/1/has-assignments").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value(true));
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN", username = "admin")
+        void testDeleteUsers_whenValidRequest_shouldReturnOk () throws Exception{
+            // given
+
+            // when and then
+            mockMvc.perform(delete("/api/v1/users/1").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Disable user successfully"));
         }
     }
 

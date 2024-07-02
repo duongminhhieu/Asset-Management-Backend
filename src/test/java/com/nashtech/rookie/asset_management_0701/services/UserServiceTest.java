@@ -85,6 +85,7 @@ class UserServiceTest {
         userInDB = new User();
         userInDB.setFirstName("first");
         userInDB.setLastName("Last");
+        userInDB.setUsername("firstl");
         userInDB.setId(1L);
         userInDB.setStatus(EUserStatus.FIRST_LOGIN);
         userInDB.setGender(EGender.FEMALE);
@@ -177,9 +178,9 @@ class UserServiceTest {
 
         @ParameterizedTest
         @CsvSource({
-                "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
-                "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
-                "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
+            "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
+            "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
+            "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
         })
         @WithMockUser(username = "abc.com", roles = "ADMIN")
         void testGetAllUse_whenPassInValid_shouldReturnCorrectFormat (
@@ -208,9 +209,9 @@ class UserServiceTest {
 
         @ParameterizedTest
         @CsvSource({
-                "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
-                "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
-                "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
+            "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
+            "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
+            "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
         })
         @WithMockUser(username = "abc.com", roles = "ADMIN")
         void testGetAllUseAssignment_whenPassInValid_shouldReturnCorrectFormat (
@@ -292,6 +293,22 @@ class UserServiceTest {
 
             // assert
             assertTrue(result);
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testDisableUser_whenGivenCorrectId_shouldWork (){
+            // given
+            userInDB.setLocation(adminLocation);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(adminUsing));
+            when(assignmentRepository.exists(any(Specification.class))).thenReturn(false);
+            when(userRepository.save(userInDB)).thenReturn(userInDB);
+            // when
+            userService.disableUser(1L);
+            // then
+            assertThat(userInDB).hasFieldOrPropertyWithValue("status", EUserStatus.DISABLED);
+
         }
     }
 
@@ -471,6 +488,61 @@ class UserServiceTest {
 
             // assert
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testDisableUser_whenUserNotInDB_shouldThrowCorrectError (){
+            // given
+            userInDB.setLocation(adminLocation);
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+            // when
+            AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
+            // then
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testDisableUser_whenUserIsDisabled_shouldThrowCorrectError (){
+            // given
+            userInDB.setLocation(adminLocation);
+            userInDB.setStatus(EUserStatus.DISABLED);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+            // when
+            AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
+            // then
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testDisableUser_whenAdminDifferentLocation_shouldThrowCorrectError (){
+            // given
+            userInDB.setLocation(new Location());
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(adminUsing));
+            // when
+            AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
+            // then
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testDisableUser_whenGivenCorrectId_shouldWork (){
+            // given
+            userInDB.setLocation(adminLocation);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+            when(userRepository.findByUsername("test")).thenReturn(Optional.of(adminUsing));
+            when(assignmentRepository.exists(any(Specification.class))).thenReturn(true);
+            // when
+            AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
+            // then
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_STILL_OWNS_VALID_ASSIGNMENTS);
+
         }
     }
 }

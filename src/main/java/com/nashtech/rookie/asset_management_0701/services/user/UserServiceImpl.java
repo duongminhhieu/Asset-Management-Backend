@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
+import org.springframework.cache.CacheManager;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthUtil authUtil;
     private final UserUtil userUtil;
+    private final CacheManager cacheManager;
 
     @Override
     @Transactional
@@ -165,6 +167,29 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public void disableUser (Long id) {
+        User userToDisable = userRepository.findById(id)
+            .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (userToDisable.getStatus().equals(EUserStatus.DISABLED)){
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        User currentAdmin = authUtil.getCurrentUser();
+        if (!currentAdmin.getLocation().equals(userToDisable.getLocation())){
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        if (existsCurrentAssignment(id)){
+            throw new AppException(ErrorCode.USER_STILL_OWNS_VALID_ASSIGNMENTS);
+        }
+
+        userToDisable.setStatus(EUserStatus.DISABLED);
+        userRepository.save(userToDisable);
+        cacheManager.getCache("userDisable").evict(userToDisable.getUsername());
+    }
+
     public Boolean existsCurrentAssignment (Long userId) {
         User assignee = userRepository.findById(userId)
             .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));

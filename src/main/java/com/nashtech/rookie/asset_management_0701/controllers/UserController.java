@@ -2,6 +2,7 @@ package com.nashtech.rookie.asset_management_0701.controllers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -77,6 +78,13 @@ public class UserController {
     public APIResponse<String> changePassword (@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
         userService.changePassword(changePasswordRequest);
         return APIResponse.<String>builder().message("Change password is success").build();
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<String> disableUser (@PathVariable Long id){
+        userService.disableUser(id);
+        return APIResponse.<String>builder().message("Disable user successfully").build();
     }
 
     @GetMapping("/{id}/has-assignments")

@@ -48,6 +48,7 @@ public enum ErrorCode {
     LOCATION_CODE_ALREADY_EXISTED(1115, "Location code is already exist", HttpStatus.BAD_REQUEST),
     USER_LOCATION_INVALID_WITH_ADMIN(1116, "User location must be the same with creator location"
             , HttpStatus.BAD_REQUEST),
+    USER_STILL_OWNS_VALID_ASSIGNMENTS(1117, "This user still has valid assignments.", HttpStatus.BAD_REQUEST),
 
     // Category
     CATEGORY_NAME_ALREADY_EXISTED(1201, "Category is already existed. Please enter a different category"

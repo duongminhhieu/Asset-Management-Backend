@@ -20,5 +20,7 @@ public interface UserService {
 
     void changePassword (ChangePasswordRequest changePasswordRequest);
 
+    void disableUser (Long id);
+
     Boolean existsCurrentAssignment (Long userId);
 }
