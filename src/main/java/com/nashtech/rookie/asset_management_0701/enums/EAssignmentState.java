@@ -4,5 +4,5 @@ public enum EAssignmentState {
     WAITING,
     ACCEPTED,
     DECLINED,
-    CLOSED
+    RETURNED
 }
