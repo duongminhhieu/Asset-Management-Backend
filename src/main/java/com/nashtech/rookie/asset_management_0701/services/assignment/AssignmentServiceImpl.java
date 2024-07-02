@@ -202,8 +202,13 @@ public class AssignmentServiceImpl implements AssignmentService {
         Pageable pageable = PageSortUtil.createPageRequest(assignmentFilter.getPageNumber(),
                 assignmentFilter.getPageSize(), sort);
         LocalDate currentDate = LocalDate.now();
-        Page<Assignment> assignments = assignmentRepository.findAllByAssignToIdAndAssignedDateLessThanEqual(
-                authUtil.getCurrentUser().getId(), currentDate, pageable);
+
+        Page<Assignment> assignments = assignmentRepository.findAll(
+                Specification.where(AssignmentSpecification.assignToIdEquals(authUtil.getCurrentUser().getId())
+                                .and(AssignmentSpecification.assignedDateLessThanEqual(currentDate)))
+                                .and(AssignmentSpecification.notStateReturned())
+                                , pageable);
+
 
         return PaginationResponse.<AssignmentResponseDto>builder()
                 .page(pageable.getPageNumber() + 1)
@@ -222,10 +227,11 @@ public class AssignmentServiceImpl implements AssignmentService {
         Page<Assignment> assignments = assignmentRepository.findAll(
                 Specification.where(AssignmentSpecification.hasAssetName(filter.getSearchString())
                         .or(AssignmentSpecification.hasAssetCode(filter.getSearchString()))
-                        .or(AssignmentSpecification.hasAssigneeUsernane(filter.getSearchString()))
+                        .or(AssignmentSpecification.hasAssigneeUsername(filter.getSearchString()))
                         .and(AssignmentSpecification.hasStates(filter.getStates()))
                         .and(AssignmentSpecification.assignOnDate(filter.getAssignDate()))
-                        .and(AssignmentSpecification.hasLocation(currentLocation)))
+                        .and(AssignmentSpecification.hasLocation(currentLocation))
+                        .and(AssignmentSpecification.notStateReturned()))
                 , pageable);
 
         return PaginationResponse.<AssignmentResponseDto>builder()

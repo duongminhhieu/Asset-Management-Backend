@@ -50,7 +50,7 @@ public final class AssignmentSpecification {
         };
     }
 
-    public static Specification<Assignment> hasAssigneeUsernane (String username){
+    public static Specification<Assignment> hasAssigneeUsername (String username){
         String lowerCaseName = username == null? "":username.trim().toLowerCase();
         return (root, query, criteriaBuilder) -> {
             Join<Assignment, User> assignmentAsset = root.join("assignTo");
@@ -65,5 +65,18 @@ public final class AssignmentSpecification {
             }
             return criteriaBuilder.equal(root.get("assignedDate"), assignDate);
         };
+    }
+
+    public static Specification<Assignment> notStateReturned (){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.notEqual(root.get("state"), EAssignmentState.RETURNED);
+    }
+
+    public static Specification<Assignment> assignToIdEquals (Long assignToId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("assignTo").get("id"), assignToId);
+    }
+
+    public static Specification<Assignment> assignedDateLessThanEqual (LocalDate assignedDate) {
+        return (root, query, criteriaBuilder)
+                -> criteriaBuilder.lessThanOrEqualTo(root.get("assignedDate"), assignedDate);
     }
 }

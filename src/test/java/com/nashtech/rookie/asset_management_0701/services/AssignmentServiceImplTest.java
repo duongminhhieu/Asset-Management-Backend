@@ -271,7 +271,7 @@ public class AssignmentServiceImplTest {
             var pageRequest = PageRequest.of(0, 20);
             var resultPage = new PageImpl<>(List.of(assignment), pageRequest, 1);
             when(authUtil.getCurrentUser()).thenReturn(user1);
-            when(assignmentRepository.findAllByAssignToIdAndAssignedDateLessThanEqual(any(), any(), any())).thenReturn(resultPage);
+            when(assignmentRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(resultPage);
 
             // When
             PaginationResponse<AssignmentResponseDto> paginationResponse =  assignmentService.getMyAssignments(assignmentFilter);

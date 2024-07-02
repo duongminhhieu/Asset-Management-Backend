@@ -195,7 +195,7 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
         String assigneeUsername = assignee.getUsername();
         return assignmentRepository.exists(Specification.where(
-            AssignmentSpecification.hasAssigneeUsernane(assigneeUsername))
+            AssignmentSpecification.hasAssigneeUsername(assigneeUsername))
             .and(AssignmentSpecification.hasStates(
                 Set.of(EAssignmentState.ACCEPTED, EAssignmentState.WAITING))));
     }
