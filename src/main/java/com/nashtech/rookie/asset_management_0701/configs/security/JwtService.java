@@ -10,12 +10,16 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
+import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
+import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.repositories.InvalidTokenRepository;
+import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -35,6 +39,8 @@ public class JwtService {
     private Long expiration;
 
     private final InvalidTokenRepository invalidTokenRepository;
+
+    private final UserRepository userRepository;
 
     private Claims extractAllClaims ( String jwtToken) {
 
@@ -101,5 +107,15 @@ public class JwtService {
 
     public String getAuthorities (ERole role) {
         return "ROLE_" + role.toString(); // "ROLE_USER READ WRITE"
+    }
+
+    @Cacheable(value = "userDisable")
+    public boolean userIsDisabled (String username){
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (user.getStatus().equals(EUserStatus.DISABLED)) {
+            return true;
+        }
+        return false;
     }
 }

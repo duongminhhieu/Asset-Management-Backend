@@ -53,17 +53,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (isTokenValid) {
 
-                if (status == EUserStatus.DISABLED) {
-                    throw new AppException(ErrorCode.UNAUTHENTICATED);
-                }
-
-
                 if (status == EUserStatus.FIRST_LOGIN
                         && !request.getRequestURI().endsWith("change-password")) {
                     throw new AppException(ErrorCode.PASSWORD_NOT_CHANGE);
                 }
 
-
+                if (jwtService.userIsDisabled(userName)) {
+                    throw new AppException(ErrorCode.USER_NOT_FOUND);
+                }
 
                 ERole role = jwtService.extractRole(jwtToken);
 
