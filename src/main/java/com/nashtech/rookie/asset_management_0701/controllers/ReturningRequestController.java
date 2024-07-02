@@ -1,6 +1,8 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +18,15 @@ import lombok.RequiredArgsConstructor;
 public class ReturningRequestController {
 
     private final ReturningRequestService returningRequestService;
+
+    @PatchMapping("/{id}/complete")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<String> completeReturningRequest (@PathVariable Long id) {
+        returningRequestService.completeReturningRequest(id);
+        return APIResponse.<String>builder()
+                .message("Returning request completed successfully")
+                .build();
+    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

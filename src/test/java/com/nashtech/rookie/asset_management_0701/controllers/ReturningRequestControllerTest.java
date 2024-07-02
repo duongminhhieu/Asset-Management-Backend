@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -45,6 +46,18 @@ public class ReturningRequestControllerTest {
 
             // WHEN, THEN
             mockMvc.perform(delete("/api/v1/returning-requests/" + id))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void completeReturningRequest_validRequest_success() throws Exception {
+            // GIVEN
+            Long id = 1L;
+            doNothing().when(returningRequestService).completeReturningRequest(id);
+
+            // WHEN, THEN
+            mockMvc.perform(patch("/api/v1/returning-requests/" + id + "/complete"))
                     .andExpect(status().isOk());
         }
 
