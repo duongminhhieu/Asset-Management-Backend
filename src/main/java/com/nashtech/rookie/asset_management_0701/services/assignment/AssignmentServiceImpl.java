@@ -207,6 +207,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 Specification.where(AssignmentSpecification.assignToIdEquals(authUtil.getCurrentUser().getId())
                                 .and(AssignmentSpecification.assignedDateLessThanEqual(currentDate)))
                                 .and(AssignmentSpecification.notStateReturned())
+                                .and(AssignmentSpecification.notStateDeclined())
                                 , pageable);
 
 

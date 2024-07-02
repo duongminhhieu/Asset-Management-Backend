@@ -71,6 +71,10 @@ public final class AssignmentSpecification {
         return (root, query, criteriaBuilder) -> criteriaBuilder.notEqual(root.get("state"), EAssignmentState.RETURNED);
     }
 
+    public static Specification<Assignment> notStateDeclined (){
+        return (root, query, criteriaBuilder) -> criteriaBuilder.notEqual(root.get("state"), EAssignmentState.DECLINED);
+    }
+
     public static Specification<Assignment> assignToIdEquals (Long assignToId) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("assignTo").get("id"), assignToId);
     }
