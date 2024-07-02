@@ -211,7 +211,7 @@ class UserServiceTest {
         @CsvSource({
             "null, 'ADMIN', 'firstName', 'DESC', 1, 20",
             "'first', 'ADMIN', 'firstName', 'DESC', 1, 20",
-            "' ', 'STAFF', 'firstName', 'DESC', 1, 20"
+            "' ', 'STAFF', 'type', 'DESC', 1, 20"
         })
         @WithMockUser(username = "abc.com", roles = "ADMIN")
         void testGetAllUseAssignment_whenPassInValid_shouldReturnCorrectFormat (
@@ -532,7 +532,7 @@ class UserServiceTest {
 
         @Test
         @WithMockUser(username = "test", roles = "ADMIN")
-        void testDisableUser_whenGivenCorrectId_shouldWork (){
+        void testDisableUser_whenUserStillHasValidAssignments_shouldThrowCorrectError (){
             // given
             userInDB.setLocation(adminLocation);
             when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
@@ -542,7 +542,20 @@ class UserServiceTest {
             AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
             // then
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_STILL_OWNS_VALID_ASSIGNMENTS);
+        }
 
+        @Test
+        void testExistsCurrentAssignment_whenAskForDisabledUser_andUserHasNoAssignment_shouldThrowCorrectError (){
+            // given
+            userInDB.setStatus(EUserStatus.DISABLED);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+
+            // when
+            AppException exception = assertThrows(AppException.class, () -> userService.existsCurrentAssignment(1L));
+
+
+            // assert
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 }

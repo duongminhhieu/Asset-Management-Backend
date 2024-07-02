@@ -21,6 +21,7 @@ import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
+import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.repositories.AssetRepository;
@@ -88,6 +89,7 @@ public class AssignmentServiceImplTest {
                 .firstName("User1")
                 .lastName("User1")
                 .location(location)
+                .status(EUserStatus.ACTIVE)
                 .build();
 
         user2 = User.builder()
@@ -96,6 +98,7 @@ public class AssignmentServiceImplTest {
                 .firstName("User2")
                 .lastName("User2")
                 .location(location)
+                .status(EUserStatus.ACTIVE)
                 .build();
 
         asset = Asset.builder()
@@ -645,6 +648,25 @@ public class AssignmentServiceImplTest {
 
             // THEN
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSIGNMENT_NOT_FOUND);
+        }
+
+        @Test
+        void createAssignment_assignToDisabledUser_shouldThrowCorrectError() {
+            // GIVEN
+            user1.setStatus(EUserStatus.DISABLED);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+            when(assetRepository.findById(1L)).thenReturn(Optional.of(asset));
+            when(authUtil.getCurrentUser()).thenReturn(user2);
+            when(assignmentRepository.save(any(Assignment.class))).thenReturn(assignment);
+            when(assetRepository.save(any(Asset.class))).thenReturn(asset);
+
+            // WHEN
+            var exception = assertThrows(AppException.class, () -> {
+                assignmentService.createAssignment(assignmentCreateDto);
+            });
+
+            // THEN
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 }

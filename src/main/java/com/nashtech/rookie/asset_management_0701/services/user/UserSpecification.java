@@ -6,6 +6,7 @@ import com.nashtech.rookie.asset_management_0701.constants.DefaultSortOptions;
 import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
+import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 
@@ -62,5 +63,9 @@ public final class UserSpecification {
 
     public static Specification<User> excludeUser (User user) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.notEqual(root, user);
+    }
+
+    public static Specification<User> isNotDisabled () {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.notEqual(root.get("status"), EUserStatus.DISABLED);
     }
 }

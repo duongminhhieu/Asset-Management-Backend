@@ -120,7 +120,8 @@ public class UserServiceImpl implements UserService {
         var specification = Specification.where(UserSpecification.hasNameContains(searchString))
                 .or(UserSpecification.hasStaffCodeContains(searchString))
                 .and(UserSpecification.hasRole(dto.getType()))
-                .and(UserSpecification.hasLocation(currentLocation));
+                .and(UserSpecification.hasLocation(currentLocation))
+                .and(UserSpecification.isNotDisabled());
 
         if (excludeCurrentUser) {
             specification = specification.and(UserSpecification.excludeUser(currentUser));
@@ -193,6 +194,9 @@ public class UserServiceImpl implements UserService {
     public Boolean existsCurrentAssignment (Long userId) {
         User assignee = userRepository.findById(userId)
             .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (assignee.getStatus().equals(EUserStatus.DISABLED)){
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
         String assigneeUsername = assignee.getUsername();
         return assignmentRepository.exists(Specification.where(
             AssignmentSpecification.hasAssigneeUsername(assigneeUsername))

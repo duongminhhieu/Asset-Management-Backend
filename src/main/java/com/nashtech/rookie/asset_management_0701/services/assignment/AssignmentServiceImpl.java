@@ -23,6 +23,7 @@ import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
+import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.AssignmentMapper;
@@ -170,8 +171,12 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     private User getUserById (Long userId) {
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (user.getStatus().equals(EUserStatus.DISABLED)){
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+        return user;
     }
 
     private Asset getAssetById (Long assetId) {
