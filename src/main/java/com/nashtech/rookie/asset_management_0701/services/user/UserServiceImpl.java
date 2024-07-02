@@ -3,6 +3,7 @@ package com.nashtech.rookie.asset_management_0701.services.user;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,13 +18,16 @@ import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDt
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserResponse;
 import com.nashtech.rookie.asset_management_0701.entities.User;
+import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.UserMapper;
+import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
+import com.nashtech.rookie.asset_management_0701.services.assignment.AssignmentSpecification;
 import com.nashtech.rookie.asset_management_0701.utils.PageSortUtil;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import com.nashtech.rookie.asset_management_0701.utils.user.UserUtil;
@@ -33,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
+    private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
     private final UserMapper userMapper;
@@ -157,5 +162,16 @@ public class UserServiceImpl implements UserService {
 
         user.setHashPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Override
+    public Boolean existsCurrentAssignment (Long userId) {
+        User assignee = userRepository.findById(userId)
+            .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+        String assigneeUsername = assignee.getUsername();
+        return assignmentRepository.exists(Specification.where(
+            AssignmentSpecification.hasAssigneeUsernane(assigneeUsername))
+            .and(AssignmentSpecification.hasStates(
+                Set.of(EAssignmentState.ACCEPTED, EAssignmentState.WAITING))));
     }
 }

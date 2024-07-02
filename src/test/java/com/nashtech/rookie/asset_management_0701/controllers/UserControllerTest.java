@@ -207,6 +207,18 @@ public class UserControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("Change password is success"));
         }
+
+        @Test
+        @WithMockUser(roles = "ADMIN", username = "admin")
+        void testHasValidAssignments_whenValidRequest_shouldReturnOk () throws Exception{
+            // given
+            when(userService.existsCurrentAssignment(1L)).thenReturn(true);
+
+            // when and then
+            mockMvc.perform(get("/api/v1/users/1/has-assignments").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value(true));
+        }
     }
 
     @Nested

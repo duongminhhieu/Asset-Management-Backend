@@ -19,4 +19,6 @@ public interface UserService {
     void firstChangePassword (FirstChangePasswordRequest firstChangePasswordRequest);
 
     void changePassword (ChangePasswordRequest changePasswordRequest);
+
+    Boolean existsCurrentAssignment (Long userId);
 }

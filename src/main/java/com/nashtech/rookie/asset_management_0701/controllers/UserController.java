@@ -5,6 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,5 +77,11 @@ public class UserController {
     public APIResponse<String> changePassword (@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
         userService.changePassword(changePasswordRequest);
         return APIResponse.<String>builder().message("Change password is success").build();
+    }
+
+    @GetMapping("/{id}/has-assignments")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<Boolean> hasValidAssignments (@PathVariable Long id){
+        return APIResponse.<Boolean>builder().result(userService.existsCurrentAssignment(id)).build();
     }
 }

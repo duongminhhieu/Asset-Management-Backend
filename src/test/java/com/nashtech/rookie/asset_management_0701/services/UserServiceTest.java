@@ -14,6 +14,7 @@ import java.util.Optional;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
+import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,9 @@ class UserServiceTest {
 
     @Autowired
     private UserMapper userMapper;
+
+    @MockBean
+    private AssignmentRepository assignmentRepository;
 
     @MockBean
     private PasswordEncoder passwordEncoder;
@@ -263,6 +267,32 @@ class UserServiceTest {
             // then
             verify(userRepository, times(1)).save(any(User.class));
         }
+
+        @Test
+        void testExistsCurrentAssignment_whenGivenCorrectId_andUserHasNoAssignment_shouldReturnFalse (){
+            // given
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+            when(assignmentRepository.exists(any(Specification.class))).thenReturn(false);
+
+            // when
+            var result = userService.existsCurrentAssignment(1L);
+
+            // assert
+            assertFalse(result);
+        }
+
+        @Test
+        void testExistsCurrentAssignment_whenGivenCorrectId_andUserHasValidAssignment_shouldReturnTrue (){
+            // given
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+            when(assignmentRepository.exists(any(Specification.class))).thenReturn(true);
+
+            // when
+            var result = userService.existsCurrentAssignment(1L);
+
+            // assert
+            assertTrue(result);
+        }
     }
 
     @Nested
@@ -430,6 +460,17 @@ class UserServiceTest {
 
             // verify
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.WRONG_PASSWORD);
+        }
+
+        @Test
+        void testExistsCurrentAssignment_whenGivenBadId_shouldThrowCorrectError (){
+            // given
+            when(userRepository.findById(2L)).thenReturn(Optional.empty());
+            // when and then
+            AppException exception = assertThrows(AppException.class, () -> userService.existsCurrentAssignment(2L));
+
+            // assert
+            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 }
