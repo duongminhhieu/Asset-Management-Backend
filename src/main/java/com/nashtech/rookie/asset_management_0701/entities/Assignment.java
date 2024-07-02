@@ -52,4 +52,5 @@ public class Assignment extends AuditEntity<String> {
 
     @OneToOne(mappedBy = "assignment")
     private ReturningRequest returningRequest;
+
 }

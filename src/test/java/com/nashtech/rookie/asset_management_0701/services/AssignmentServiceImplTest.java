@@ -2,10 +2,8 @@ package com.nashtech.rookie.asset_management_0701.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -186,7 +184,7 @@ public class AssignmentServiceImplTest {
 
         @Test
         @WithMockUser(username = "User1", roles = "ADMIN")
-        void testGetAllAssignMent_validRequest_success (){
+        void testGetAllAssignment_validRequest_success (){
             // GIVEN
             when(authUtil.getCurrentUser()).thenReturn(user1);
             var pageRequest = PageRequest.of(0, 20, Sort.Direction.ASC, "asset_name");
@@ -206,7 +204,7 @@ public class AssignmentServiceImplTest {
 
         @Test
         @WithMockUser(username = "User1", roles = "ADMIN")
-        void testGetAllAssignMent_nullFilterRequest_success (){
+        void testGetAllAssignment_nullFilterRequest_success (){
             // GIVEN
             assignmentFilter = AssignmentFilter.builder()
                 .searchString(null)
@@ -232,6 +230,9 @@ public class AssignmentServiceImplTest {
                 .hasFieldOrPropertyWithValue("itemsPerPage", 20);
             assertThat(result.getData()).hasSize(1);
         }
+
+        @Test
+        @WithMockUser(username = "User1", roles = "ADMIN")
         void updateAssignment_validRequest_returnAssignmentResponseDto() {
             // GIVEN
             assignment.setState(EAssignmentState.WAITING);
