@@ -12,4 +12,6 @@ public interface ReturningRequestService {
 
     void completeReturningRequest (Long id);
     void cancelReturningRequest (Long id);
+
+    ReturningRequestResponseDto adminCreateReturningRequest (Long assignmentId);
 }

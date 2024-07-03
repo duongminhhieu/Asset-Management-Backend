@@ -15,6 +15,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.returning_reques
 import com.nashtech.rookie.asset_management_0701.entities.Assignment;
 import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.ReturningRequest;
+import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentReturnState;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
@@ -100,6 +101,28 @@ public class ReturningRequestServiceImpl implements ReturningRequestService {
         }
 
         returningRequestRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public ReturningRequestResponseDto adminCreateReturningRequest (Long assignmentId) {
+        User user = authUtil.getCurrentUser();
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+        if (!assignment.getState().equals(EAssignmentState.ACCEPTED)) {
+            throw new AppException(ErrorCode.RETURNING_REQUEST_STATE_INVALID);
+        }
+        if (assignment.getReturningRequest() != null) {
+            throw new AppException(ErrorCode.RETURNING_REQUEST_ALREADY_EXISTS);
+        }
+        if (!assignment.getAssignTo().getLocation().equals(user.getLocation())) {
+            throw new AppException(ErrorCode.RETURNING_REQUEST_SAME_LOCATION);
+        }
+        ReturningRequest returningRequest = new ReturningRequest();
+        returningRequest.setRequestedBy(user);
+        returningRequest.setState(EAssignmentReturnState.WAITING_FOR_RETURNING);
+        returningRequest.setAssignment(assignment);
+        return returningRequestMapper.toReturningRequestDto(returningRequestRepository.save(returningRequest));
     }
 
     @Override

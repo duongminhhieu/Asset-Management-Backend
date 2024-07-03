@@ -143,7 +143,24 @@ public class ReturningRequestControllerTest {
             // When Then
             mockMvc.perform(post("/api/v1/returning-requests/{id}", id)
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.result.id").value(1L))
+                    .andExpect(jsonPath("$.result.requestedBy.username").value("User1"))
+                    .andExpect(jsonPath("$.result.state").value("WAITING_FOR_RETURNING"))
+                    .andExpect(jsonPath("$.result.assignment.id").value(1L));
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = {"ADMIN"})
+        void adminCreateReturningRequest_validRequest_success() throws Exception {
+            // Given
+            Long id = 1L;
+            when(returningRequestService.adminCreateReturningRequest(1L)).thenReturn(returningRequestResponseDto);
+
+            // When Then
+            mockMvc.perform(post("/api/v1/returning-requests/demand/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.result.id").value(1L))
                     .andExpect(jsonPath("$.result.requestedBy.username").value("User1"))
                     .andExpect(jsonPath("$.result.state").value("WAITING_FOR_RETURNING"))

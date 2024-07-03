@@ -17,7 +17,6 @@ import com.nashtech.rookie.asset_management_0701.repositories.ReturningRequestRe
 import com.nashtech.rookie.asset_management_0701.services.returning_request.ReturningRequestServiceImpl;
 import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import org.assertj.core.api.Assertions;
-import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -52,6 +51,7 @@ class ReturningRequestServiceImplTest {
     private Asset asset;
     private User user;
     private User user1;
+    private User user2;
 
     @BeforeEach
     void setUp() {
@@ -60,12 +60,26 @@ class ReturningRequestServiceImplTest {
                 .name("HCM")
                 .build();
 
+        Location location1 = Location
+                .builder()
+                .name("Ha Noi")
+                .code("HN")
+                .build();
+
         user1 = User.builder()
                 .id(1L)
                 .username("User1")
                 .firstName("User1")
                 .lastName("User1")
                 .location(location)
+                .build();
+
+        user2 = User.builder()
+                .id(1L)
+                .username("User1")
+                .firstName("User1")
+                .lastName("User1")
+                .location(location1)
                 .build();
 
         asset = Asset.builder()
@@ -78,6 +92,7 @@ class ReturningRequestServiceImplTest {
                 .state(EAssignmentState.ACCEPTED)
                 .assignedDate(LocalDate.now())
                 .asset(asset)
+                .assignTo(user1)
                 .build();
 
         assignmentError = Assignment.builder()
@@ -155,6 +170,22 @@ class ReturningRequestServiceImplTest {
 
             // When
             ReturningRequestResponseDto result = returningRequestService.createReturningRequest(1L);
+
+            // Then
+            Assertions.assertThat(result.getId()).isEqualTo(returningRequest.getId());
+            Assertions.assertThat(result.getState()).isEqualTo(EAssignmentReturnState.WAITING_FOR_RETURNING);
+        }
+
+        @Test
+        void adminCreateReturningRequest_validRequest_returnReturningRequestDto() {
+            // Given
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(authUtil.getCurrentUserName()).thenReturn(user1.getUsername());
+            when(returningRequestRepository.save(any())).thenReturn(returningRequest);
+
+            // When
+            ReturningRequestResponseDto result = returningRequestService.adminCreateReturningRequest(1L);
 
             // Then
             Assertions.assertThat(result.getId()).isEqualTo(returningRequest.getId());
@@ -263,6 +294,50 @@ class ReturningRequestServiceImplTest {
             );
             // Then
             Assertions.assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.RETURNING_REQUEST_ALREADY_EXISTS);
+        }
+
+        @Test
+        void adminCreateReturningRequest_assignmentStateNotAccepted_throwException() {
+            // Given
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignmentError));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(authUtil.getCurrentUserName()).thenReturn(user1.getUsername());
+            // When
+            var exception = assertThrows(AppException.class, () ->
+                    returningRequestService.adminCreateReturningRequest(1L)
+            );
+            // Then
+            Assertions.assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.RETURNING_REQUEST_STATE_INVALID);
+        }
+
+        @Test
+        void adminCreateReturningRequest_assignmentAlreadyHasReturningRequest_throwException() {
+            // Given
+            assignment.setReturningRequest(returningRequest);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(authUtil.getCurrentUserName()).thenReturn(user1.getUsername());
+            // When
+            var exception = assertThrows(AppException.class, () ->
+                    returningRequestService.adminCreateReturningRequest(1L)
+            );
+            // Then
+            Assertions.assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.RETURNING_REQUEST_ALREADY_EXISTS);
+        }
+
+        @Test
+        void adminCreateReturningRequest_assignmentHasDifferentLocation_throwException() {
+            // Given
+            assignment.setAssignTo(user2);
+            when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+            when(authUtil.getCurrentUser()).thenReturn(user1);
+            when(authUtil.getCurrentUserName()).thenReturn(user1.getUsername());
+            // When
+            var exception = assertThrows(AppException.class, () ->
+                    returningRequestService.adminCreateReturningRequest(1L)
+            );
+            // Then
+            Assertions.assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.RETURNING_REQUEST_SAME_LOCATION);
         }
     }
 

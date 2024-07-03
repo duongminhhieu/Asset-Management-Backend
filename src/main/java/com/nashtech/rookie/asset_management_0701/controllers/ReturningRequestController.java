@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nashtech.rookie.asset_management_0701.dtos.filters.ReturningRequestFilter;
@@ -45,6 +47,7 @@ public class ReturningRequestController {
     }
 
     @PostMapping("/{assignmentId}")
+    @ResponseStatus(HttpStatus.CREATED)
     public APIResponse<ReturningRequestResponseDto> createReturningRequestAtHomePage (@PathVariable("assignmentId")
                                                                                           Long assignmentId) {
         return APIResponse.<ReturningRequestResponseDto>builder()
@@ -57,6 +60,15 @@ public class ReturningRequestController {
         returningRequestService.cancelReturningRequest(id);
         return APIResponse.<String>builder()
                 .message("Returning request canceled successfully")
+                .build();
+    }
+    @PostMapping("/demand/{assignmentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public APIResponse<ReturningRequestResponseDto> createReturningRequestAtAdminPage (@PathVariable("assignmentId")
+                                                                                      Long assignmentId) {
+        return APIResponse.<ReturningRequestResponseDto>builder()
+                .result(returningRequestService.adminCreateReturningRequest(assignmentId))
                 .build();
     }
 }
