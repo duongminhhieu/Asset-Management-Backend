@@ -15,12 +15,12 @@ pr:
 variables:
   azureSubscription: 'azureSubscription'
   resourceGroupName: 'rookies7'
-  imageName: 'asset-backend'
-  registryName: 'duongminhhieu008'
+  imageName: 'assetmanagement'
+  registryName: 'asset-management-428307'
   appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
-  containerRegistry: 'asset-docker'
+  containerRegistry: 'gcr-build-connection'
 
 stages:
 - stage: Build
