@@ -5,19 +5,22 @@
 
 trigger:
 - main
+- ci-cd
 pr:
   branches:
     include:
-      - main
+    - main
+    - ci-cd
 
 variables:
   azureSubscription: 'azureSubscription'
-  resouceGroupName: 'rookies7'
-  imageName: 'assset-backend'
-  registryName: 'rookie7reg.azurecr.io'
+  resourceGroupName: 'rookies7'
+  imageName: 'asset-backend'
+  registryName: 'duongminhhieu008'
   appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
+  containerRegistry: 'asset-docker'
 
 stages:
 - stage: Build
@@ -45,7 +48,7 @@ stages:
           command: buildAndPush
           repository: $(registryName)/$(imageName)
           dockerfile: $(dockerfilePath)
-          containerRegistry: 'RookieReg'
+          containerRegistry: $(containerRegistry)
           tags: |
             $(tag)
 
