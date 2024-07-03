@@ -15,12 +15,12 @@ pr:
 variables:
   azureSubscription: 'azureSubscription'
   resourceGroupName: 'rookies7'
-  imageName: 'assetmanagement'
-  registryName: 'asset-management-428307'
+  imageName: 'asset-backend'
+  registryName: 'duongminhhieu008'
   appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
-  containerRegistry: 'gcr-connection-2'
+  containerRegistry: 'asset-docker'
 
 stages:
 - stage: Build
@@ -41,12 +41,6 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
-
-      - task: Docker@2
-        displayName: 'Login to Container Registry'
-        inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
 
       - task: Docker@2
         displayName: 'Build and push an image to container registry'
