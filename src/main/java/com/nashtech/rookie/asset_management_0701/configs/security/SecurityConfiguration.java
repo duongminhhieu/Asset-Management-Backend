@@ -30,7 +30,7 @@ public class SecurityConfiguration {
     private static final String[] ALLOWED_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"};
 
     private static final String[] ALLOWED_ORIGINS = {
-        "http://localhost:5173",
+        "http://localhost:5173", "https://asset-frontend-nwxlxlqavq-as.a.run.app"
     };
 
     @Bean
