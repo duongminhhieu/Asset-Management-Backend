@@ -50,7 +50,7 @@ stages:
           secureFile: 'asset-management-428307-0ece6390dcdb.json'
 
       - script: |
-          gcloud auth login --cred-file:$(GCP_SERVICE_ACCOUNT_KEY.secureFilePath) --project=${GCP_PROJECT_ID}
+          gcloud auth activate-service-account --key-file=$(GCP_SERVICE_ACCOUNT_KEY.secureFilePath) --project=${GCP_PROJECT_ID}
         displayName: 'Login to GCP'
           
 
