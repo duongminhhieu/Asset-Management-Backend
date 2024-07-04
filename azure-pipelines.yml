@@ -16,7 +16,8 @@ variables:
   azureSubscription: 'azureSubscription'
   resourceGroupName: 'rookies7'
   imageName: 'asset-backend'
-  registryName: 'duongminhhieu008'
+  location: 'asia-southeast1'
+  repositoryName: 'assetmanagement'
   appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
@@ -50,7 +51,7 @@ stages:
           secureFile: 'asset-management-428307-0ece6390dcdb.json'
 
       - script: |
-          gcloud auth activate-service-account --key-file=$(GCP_SERVICE_ACCOUNT_KEY.secureFilePath) --project=${GCP_PROJECT_ID}
+          gcloud auth activate-service-account --key-file=$(GCP_SERVICE_ACCOUNT_KEY.secureFilePath) --project=$(GCP_PROJECT_ID)
         displayName: 'Login to GCP'
           
 
@@ -58,7 +59,7 @@ stages:
         displayName: 'Build and push an image to container registry'
         inputs:
           command: buildAndPush
-          repository: $(registryName)/$(imageName)
+          repository: $(location)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(repositoryName)/$(imageName)
           dockerfile: $(dockerfilePath)
           containerRegistry: $(containerRegistry)
           tags: |
