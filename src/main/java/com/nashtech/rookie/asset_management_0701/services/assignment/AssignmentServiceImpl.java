@@ -97,7 +97,10 @@ public class AssignmentServiceImpl implements AssignmentService {
 
         switch (state) {
             case EAssignmentState.ACCEPTED -> assignment.setState(EAssignmentState.ACCEPTED);
-            case EAssignmentState.DECLINED -> assignment.setState(EAssignmentState.DECLINED);
+            case EAssignmentState.DECLINED -> {
+                assignment.setState(EAssignmentState.DECLINED);
+                assignment.getAsset().setState(EAssetState.AVAILABLE);
+            }
             default -> assignment.setState(EAssignmentState.WAITING);
         }
         return assignmentMapper.toAssignmentResponseDto(assignment);
