@@ -25,11 +25,11 @@ public class ReportController {
     public APIResponse<PaginationResponse<ReportResponse>> getReport (
             @RequestParam(defaultValue = "1") Integer pageNumber
             , @RequestParam(defaultValue = "10") Integer pageSize
-            , @RequestParam(defaultValue = "id") String sortBy
-            , @RequestParam(defaultValue = "asc") String sortDirection
+            , @RequestParam(defaultValue = "id") String orderBy
+            , @RequestParam(defaultValue = "asc") String sortDir
     ) {
         return APIResponse.<PaginationResponse<ReportResponse>>builder()
-                .result(reportService.getReport(pageNumber, pageSize, sortBy, sortDirection))
+                .result(reportService.getReport(pageNumber, pageSize, orderBy, sortDir))
                 .build();
     }
 }
