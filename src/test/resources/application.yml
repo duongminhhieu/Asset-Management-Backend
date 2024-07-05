@@ -13,3 +13,6 @@ application:
   jwt:
     secret-key: 123566
     expiration: 100000
+
+  frontend:
+    url: http://localhost:5173

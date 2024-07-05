@@ -2,6 +2,7 @@ package com.nashtech.rookie.asset_management_0701.configs.security;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,25 +22,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
     private static final String[] PUBLIC_ENDPOINTS = {
         "/api/v1/auth/**", "/swagger-ui/**", "/api-docs/**",
     };
 
     private static final String[] ALLOWED_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"};
 
-    private static final String[] ALLOWED_ORIGINS = {
-        "http://localhost:5173", "https://asset-frontend-nwxlxlqavq-as.a.run.app"
-    };
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${application.frontend.url}")
+    private String frontEndUrl;
 
     @Bean
     public SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
 
+        String[] allowedOrigins = {"http://localhost:5173", frontEndUrl};
+
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(List.of(ALLOWED_ORIGINS)); // Allow any origin
+                    corsConfiguration.setAllowedOrigins(List.of(allowedOrigins));
                     corsConfiguration.setAllowedMethods(List.of(ALLOWED_METHODS));
                     corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
                     return corsConfiguration;
