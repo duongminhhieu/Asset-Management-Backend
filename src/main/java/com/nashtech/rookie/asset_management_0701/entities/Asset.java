@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -55,4 +56,7 @@ public class Asset extends AuditEntity<String> {
 
     @OneToMany(mappedBy = "asset")
     private Set<Assignment> assignments;
+
+    @Version
+    private Long version;
 }

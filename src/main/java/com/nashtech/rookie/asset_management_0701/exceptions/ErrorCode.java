@@ -23,7 +23,7 @@ public enum ErrorCode {
     PASSWORD_NOT_CHANGE(1009, "Password is not change first time", HttpStatus.BAD_REQUEST),
     INVALID_SORT_DIR(1010, "Sort direction must be ASC or DESC", HttpStatus.BAD_REQUEST),
     INVALID_SORT_FIELD(1011, "Invalid sort field", HttpStatus.BAD_REQUEST),
-
+    DATA_IS_OLD(1012, "Data is old, please refresh", HttpStatus.CONFLICT),
 
     // User
     EXCEED_MAX_FIRSTNAME(1100, "First name must not exceed {max} characters", HttpStatus.BAD_REQUEST),

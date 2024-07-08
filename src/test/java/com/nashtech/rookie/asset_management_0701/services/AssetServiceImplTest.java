@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.services;
 
+import com.nashtech.rookie.asset_management_0701.dtos.requests.asset.AssetUpdateDto;
 import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -41,6 +43,7 @@ import com.nashtech.rookie.asset_management_0701.mappers.AssetMapper;
 import com.nashtech.rookie.asset_management_0701.repositories.AssetRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.CategoryRepository;
 import com.nashtech.rookie.asset_management_0701.services.asset.AssetServiceImpl;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -67,6 +70,7 @@ class AssetServiceImplTest {
     private AssetServiceImpl assetService;
 
     private AssetCreateDto assetCreateDto;
+    private AssetUpdateDto assetUpdateDto;
     private Asset asset;
     private AssetResponseDto assetResponseDto;
     private User user;
@@ -75,6 +79,10 @@ class AssetServiceImplTest {
 
     @BeforeEach
     void setUp () {
+        Location location = Location.builder()
+                .id(1L)
+                .name("Ha Noi").build();
+
         assetCreateDto = AssetCreateDto.builder()
                 .name("Asset1")
                 .category("Laptop")
@@ -93,8 +101,18 @@ class AssetServiceImplTest {
                 .category(category)
                 .specification("Specification")
                 .installDate(LocalDate.now())
+                .location(location)
                 .state(EAssetState.AVAILABLE)
+                .version(1L)
                 .assetCode("LP000001")
+                .build();
+
+        assetUpdateDto = AssetUpdateDto.builder()
+                .name("Asset1")
+                .specification("Specification")
+                .installDate(LocalDate.now())
+                .version(1L)
+                .state(EAssetState.AVAILABLE)
                 .build();
 
         assetResponseDto = AssetResponseDto.builder()
@@ -107,10 +125,7 @@ class AssetServiceImplTest {
                 .build();
 
         user = User.builder()
-                .location(Location.builder()
-                        .id(1L)
-                        .name("Ha Noi")
-                        .build())
+                .location(location)
                 .build();
 
 
@@ -212,6 +227,20 @@ class AssetServiceImplTest {
             assertThat(result).isTrue();
         }
 
+        @Test
+        void testUpdateAsset_validRequest_returnSuccess() {
+            // Given
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+
+            // When
+            assetService.updateAsset(1L, assetUpdateDto);
+
+            // Then
+            verify(assetMapper, times(1)).updateAsset(asset, assetUpdateDto);
+            verify(assetRepository, times(1)).save(asset);
+        }
+
     }
 
     @Nested
@@ -290,7 +319,7 @@ class AssetServiceImplTest {
         }
 
         @Test
-        void testDeleteAssset_AssetAssigned_returnException(){
+        void testDeleteAsset_AssetAssigned_returnException(){
             // Given
             asset.setState(EAssetState.ASSIGNED);
             given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
@@ -319,5 +348,73 @@ class AssetServiceImplTest {
                     .isInstanceOf(AppException.class)
                     .hasMessageContaining(ErrorCode.ASSET_WAS_ASSIGNED.getMessage());
         }
+
+        @Test
+        void testUpdateAssetNotFound() {
+            // Given
+            given(assetRepository.findById(1L)).willReturn(Optional.empty());
+
+            // When Then
+            assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void testUpdateAssetVersionMismatch() {
+            assetUpdateDto.setVersion(1L);
+            asset.setVersion(2L);
+
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+
+            assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DATA_IS_OLD);
+        }
+
+        @Test
+        void testUpdateAssetLocationMismatch() {
+            assetUpdateDto.setVersion(1L);
+            asset.setVersion(1L);
+            asset.setLocation(Location.builder()
+                    .name("HCM").build());
+
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+
+            assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void testUpdateAssetIsAssigned() {
+            assetUpdateDto.setVersion(1L);
+            asset.setVersion(1L);
+            asset.setState(EAssetState.ASSIGNED);
+
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+
+            assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_IS_ASSIGNED);
+        }
+
+        @Test
+        void testUpdateAssetOptimisticLockingFailure() {
+            assetUpdateDto.setVersion(1L);
+            asset.setVersion(1L);
+            asset.setState(EAssetState.AVAILABLE);
+
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+            doThrow(new OptimisticLockingFailureException("")).when(assetRepository).save(asset);
+
+            assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DATA_IS_OLD);
+        }
+
     }
 }
