@@ -1,6 +1,7 @@
 package com.nashtech.rookie.asset_management_0701.configs.security;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -45,33 +46,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String jwtToken = authorizationHeader.replace(tokenPrefix, "");
         final String userName = jwtService.extractUserName(jwtToken);
-        if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            boolean isTokenValid = jwtService.isTokenValid(jwtToken);
+        if (jwtService.extractExpiration(jwtToken).before(new Date())){
+            throw new AppException(ErrorCode.INVALID_TOKEN);
+        }
+
+        if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             EUserStatus status = jwtService.extractStatus(jwtToken);
 
-            if (isTokenValid) {
-
-                if (status == EUserStatus.FIRST_LOGIN
-                        && !request.getRequestURI().endsWith("change-password")) {
-                    throw new AppException(ErrorCode.PASSWORD_NOT_CHANGE);
-                }
-
-                if (jwtService.userIsDisabled(userName)) {
-                    throw new AppException(ErrorCode.USER_NOT_FOUND);
-                }
-
-                ERole role = jwtService.extractRole(jwtToken);
-
-                String scopes = jwtService.getAuthorities(role);
-
-
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userName, null, AuthorityUtils.createAuthorityList(scopes));
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            if (status == EUserStatus.FIRST_LOGIN
+                    && !request.getRequestURI().endsWith("change-password")) {
+                throw new AppException(ErrorCode.PASSWORD_NOT_CHANGE);
             }
+            var securityData = jwtService.getSecurityData(userName);
+            if (jwtService.userIsDisabled(securityData)) {
+                throw new AppException(ErrorCode.USER_NOT_FOUND);
+            }
+
+            if (jwtService.tokenIsDisabled(securityData, jwtToken)){
+                throw new AppException(ErrorCode.INVALID_TOKEN);
+            }
+
+            ERole role = jwtService.extractRole(jwtToken);
+
+            String scopes = jwtService.getAuthorities(role);
+
+
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    userName, null, AuthorityUtils.createAuthorityList(scopes));
+            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
 
         filterChain.doFilter(request, response);

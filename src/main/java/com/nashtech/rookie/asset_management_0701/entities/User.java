@@ -1,6 +1,7 @@
 package com.nashtech.rookie.asset_management_0701.entities;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 import com.nashtech.rookie.asset_management_0701.enums.EGender;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
@@ -14,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,6 +64,9 @@ public class User extends AuditEntity<String> {
 
     @ManyToOne(fetch = FetchType.EAGER)
     private Location location;
+
+    @OneToMany(mappedBy = "user")
+    private Set<InvalidToken> invalidTokens;
 
     public void generateStaffCode () {
         this.setStaffCode(String.format("SD%04d", getId()));

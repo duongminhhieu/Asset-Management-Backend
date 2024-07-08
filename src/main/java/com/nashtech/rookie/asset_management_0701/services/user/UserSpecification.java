@@ -1,14 +1,19 @@
 package com.nashtech.rookie.asset_management_0701.services.user;
 
+
 import org.springframework.data.jpa.domain.Specification;
 
 import com.nashtech.rookie.asset_management_0701.constants.DefaultSortOptions;
+import com.nashtech.rookie.asset_management_0701.entities.InvalidToken;
 import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.SetJoin;
+
 
 public final class UserSpecification {
     private UserSpecification () {
@@ -67,5 +72,18 @@ public final class UserSpecification {
 
     public static Specification<User> isNotDisabled () {
         return (root, query, criteriaBuilder) -> criteriaBuilder.notEqual(root.get("status"), EUserStatus.DISABLED);
+    }
+
+    public static Specification<User> hasUsername (String username){
+        return  (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("username"), username);
+    }
+
+    public static Specification<User> tokenNotExpireForUsername (String username) {
+        return (root, query, builder) -> {
+            root.fetch("invalidTokens", JoinType.LEFT);
+            final SetJoin<User, InvalidToken> userToken = root.joinSet("invalidTokens", JoinType.LEFT);
+            userToken.on(builder.greaterThan(userToken.get("expiryDate"), builder.currentTimestamp()));
+            return builder.equal(userToken.getParent().get("username"), username);
+        };
     }
 }

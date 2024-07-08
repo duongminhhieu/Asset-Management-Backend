@@ -8,11 +8,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.nashtech.rookie.asset_management_0701.dtos.security.UserSecurityData;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.ERole;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
@@ -20,6 +23,7 @@ import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.repositories.InvalidTokenRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
+import com.nashtech.rookie.asset_management_0701.services.user.UserSpecification;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -110,12 +114,23 @@ public class JwtService {
     }
 
     @Cacheable(value = "userDisable")
-    public boolean userIsDisabled (String username){
-        User user = userRepository.findByUsername(username)
+    public UserSecurityData getSecurityData (String username){
+        User user = userRepository.findOne(
+            Specification.where(UserSpecification.tokenNotExpireForUsername(username)))
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (user.getStatus().equals(EUserStatus.DISABLED)) {
-            return true;
-        }
-        return false;
+        return UserSecurityData.builder()
+            .id(user.getId())
+            .status(user.getStatus())
+            .invalidTokens(user.getInvalidTokens()
+                    .stream().map(token -> token.getIdToken()).collect(Collectors.toSet()))
+            .build();
+    }
+
+    public boolean userIsDisabled (UserSecurityData data) {
+        return data.getStatus().equals(EUserStatus.DISABLED);
+    }
+
+    public boolean tokenIsDisabled (UserSecurityData data, String token) {
+        return data.getInvalidTokens().contains(token);
     }
 }
