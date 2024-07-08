@@ -5,7 +5,6 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.location.Locatio
 import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
-import com.nashtech.rookie.asset_management_0701.mappers.LocationMapper;
 import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
 import com.nashtech.rookie.asset_management_0701.services.location.LocationServiceImpl;
 import org.junit.jupiter.api.Nested;

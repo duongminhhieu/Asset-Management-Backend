@@ -78,6 +78,8 @@ public enum ErrorCode {
     RETURNING_REQUEST_STATE_INVALID(1502, "Returning request state is invalid", HttpStatus.BAD_REQUEST),
     RETURNING_REQUEST_ALREADY_EXISTS(1503, "Returning request is already exist", HttpStatus.BAD_REQUEST),
     RETURNING_REQUEST_SAME_LOCATION(1503, "Admin must have the same location with assignment", HttpStatus.BAD_REQUEST),
+    // Report
+    EXPORT_REPORT_ERROR(1601, "Cannot export report file", HttpStatus.NOT_FOUND),
     // constraint violation
     INVALID_PASSWORD(2001, "Password must be at least 8 characters less than 128 characters " +
             "contains at least 1 uppercase, " +
