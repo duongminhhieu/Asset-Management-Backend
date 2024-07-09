@@ -1,6 +1,11 @@
 package com.nashtech.rookie.asset_management_0701.services.auth;
 
+
+import java.time.Instant;
+
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,5 +74,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         invalidTokenRepository.save(invalidToken);
 
         cacheManager.getCache("userDisable").evictIfPresent(authUtil.getCurrentUserName());
+    }
+
+    @CacheEvict(value = "userDisable", allEntries = true)
+    @Scheduled(fixedDelayString = "${application.jwt.expiration}")
+    @Transactional
+    public void cleanInvalidToken () {
+        invalidTokenRepository.deleteExpiredTokens(Instant.now());
     }
 }

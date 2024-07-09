@@ -2,8 +2,11 @@ package com.nashtech.rookie.asset_management_0701.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 
@@ -146,6 +149,15 @@ public class AuthenticationServiceTest {
             assertThat(exception.getErrorCode().getMessage()).isEqualTo("User is not active");
             verify(jwtService, never()).generateToken(any());
             verify(passwordEncoder, times(1)).matches(anyString(), anyString());
+        }
+
+        @Test
+        void testCleanUpDb () {
+            // Call the method under test
+            authenticationService.cleanInvalidToken();
+
+            // Verify that deleteExpiredTokens() was called on invalidTokenRepository with the current time
+            verify(invalidTokenRepository, atLeastOnce()).deleteExpiredTokens(any(Instant.class));
         }
     }
 }
