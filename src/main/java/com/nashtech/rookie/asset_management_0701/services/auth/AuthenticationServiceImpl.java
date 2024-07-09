@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.services.auth;
 
+import org.springframework.cache.CacheManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,11 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nashtech.rookie.asset_management_0701.configs.security.JwtService;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.auth.AuthenticationRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.auth.AuthenticationResponse;
+import com.nashtech.rookie.asset_management_0701.entities.InvalidToken;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
 import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import com.nashtech.rookie.asset_management_0701.mappers.UserMapper;
+import com.nashtech.rookie.asset_management_0701.repositories.InvalidTokenRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
+import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -26,6 +30,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
 
     private final UserMapper userMapper;
+
+    private final AuthUtil authUtil;
+
+    private final InvalidTokenRepository invalidTokenRepository;
+
+    private final CacheManager cacheManager;
 
     @Override
     public AuthenticationResponse login (AuthenticationRequest request) {
@@ -49,5 +59,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .user(userMapper.toUserResponse(user))
                 .token(token)
                 .build();
+    }
+
+    @Transactional
+    public void logout (String token) {
+        InvalidToken invalidToken =
+            new InvalidToken(token, jwtService.extractExpiration(token).toInstant(), authUtil.getCurrentUser());
+
+        invalidTokenRepository.save(invalidToken);
+
+        cacheManager.getCache("userDisable").evictIfPresent(authUtil.getCurrentUserName());
     }
 }

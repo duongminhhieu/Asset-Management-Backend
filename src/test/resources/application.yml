@@ -11,5 +11,5 @@ application:
       username: testuser
       password: 123456
   jwt:
-    secret-key: 123566
+    secret-key: a0a5753ffe00e4a9862dd059182b5f759e946a11b8ed270eb603cd7313cbc717
     expiration: 100000

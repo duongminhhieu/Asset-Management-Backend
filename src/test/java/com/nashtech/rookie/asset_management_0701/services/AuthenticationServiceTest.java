@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.util.Date;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +20,10 @@ import com.nashtech.rookie.asset_management_0701.dtos.requests.auth.Authenticati
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
+import com.nashtech.rookie.asset_management_0701.repositories.InvalidTokenRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.UserRepository;
 import com.nashtech.rookie.asset_management_0701.services.auth.AuthenticationServiceImpl;
+import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 
 @SpringBootTest
 public class AuthenticationServiceTest {
@@ -37,12 +40,18 @@ public class AuthenticationServiceTest {
     @MockBean
     private UserRepository userRepository;
 
+    @MockBean
+    private InvalidTokenRepository invalidTokenRepository;
+
+    @MockBean
+    private AuthUtil authUtil;
+
     private User user;
 
     private AuthenticationRequest authRequest;
 
     @BeforeEach
-    void SetUp() {
+    void SetUp () {
         user = User.builder()
                 .username("admin")
                 .hashPassword("123456")
@@ -69,12 +78,27 @@ public class AuthenticationServiceTest {
 
             assertThat(authenticationResponse).isNotNull().hasFieldOrPropertyWithValue("token", "token");
         }
+
+        @Test
+        void testLogout_whenSuccess () {
+            String token = "token";
+            Date expiryDate = new Date();
+            when(jwtService.extractExpiration(token)).thenReturn(expiryDate);
+            when(authUtil.getCurrentUser()).thenReturn(user);
+            when(authUtil.getCurrentUserName()).thenReturn("admin");
+            when(invalidTokenRepository.save(any())).thenReturn(null);
+
+            authenticationService.logout(token);
+
+            verify(invalidTokenRepository, times(1)).save(any());
+
+        }
     }
 
     @Nested
     class UnhappyCase {
         @Test
-        void login_invalidUserName_throwException() {
+        void login_invalidUserName_throwException () {
             // Given
 
             when(userRepository.findByUsername("admin")).thenReturn(Optional.empty());
@@ -92,7 +116,7 @@ public class AuthenticationServiceTest {
         }
 
         @Test
-        void login_invalidPassword_thorwException() {
+        void login_invalidPassword_thorwException () {
             // Given
             when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("123456", user.getHashPassword())).thenReturn(false);
@@ -108,7 +132,7 @@ public class AuthenticationServiceTest {
         }
 
         @Test
-        void login_userIsNotActive_throwException() {
+        void login_userIsNotActive_throwException () {
             // Given
             user.setStatus(EUserStatus.DISABLED);
             when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
