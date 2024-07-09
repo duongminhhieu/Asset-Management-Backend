@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +19,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswo
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserUpdateRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.APIResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserResponse;
@@ -87,9 +89,21 @@ public class UserController {
         return APIResponse.<String>builder().message("Disable user successfully").build();
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<UserResponse> editUser (@PathVariable Long id, @RequestBody @Valid UserUpdateRequest user){
+        return APIResponse.<UserResponse>builder().result(userService.editUser(id, user)).build();
+    }
+
     @GetMapping("/{id}/has-assignments")
     @PreAuthorize("hasRole('ADMIN')")
     public APIResponse<Boolean> hasValidAssignments (@PathVariable Long id){
         return APIResponse.<Boolean>builder().result(userService.existsCurrentAssignment(id)).build();
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<UserResponse> getUserById (@PathVariable Long id ){
+        return APIResponse.<UserResponse>builder().result(userService.getUserById(id)).build();
     }
 }

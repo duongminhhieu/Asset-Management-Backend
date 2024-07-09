@@ -73,7 +73,7 @@ public class ReportServiceImplTest {
             when(reportUtil.writeExcel(mockReportList)).thenReturn(mockInputStream);
 
             // When
-            Resource result = reportService.exportReport();
+            Resource result = reportService.exportReport("id", "asc");
 
             // Then
             assertInstanceOf(InputStreamResource.class, result);

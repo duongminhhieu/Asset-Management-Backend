@@ -1,10 +1,12 @@
 package com.nashtech.rookie.asset_management_0701.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
@@ -12,10 +14,12 @@ import java.util.List;
 import java.util.Optional;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
-import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserUpdateRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.responses.location.LocationResponse;
 import com.nashtech.rookie.asset_management_0701.enums.EUserStatus;
 import com.nashtech.rookie.asset_management_0701.repositories.AssignmentRepository;
 import com.nashtech.rookie.asset_management_0701.repositories.LocationRepository;
+import com.nashtech.rookie.asset_management_0701.utils.auth_util.AuthUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -27,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -54,6 +59,8 @@ import com.nashtech.rookie.asset_management_0701.services.user.UserServiceImpl;
 @SpringBootTest
 @Slf4j
 class UserServiceTest {
+    @MockBean
+    private AuthUtil authUtil;
 
     @MockBean
     private UserRepository userRepository;
@@ -79,6 +86,7 @@ class UserServiceTest {
 
     private User userInDB;
     private ChangePasswordRequest changePasswordRequest;
+    private UserResponse userResponse;
 
     @BeforeEach
     void setUp () {
@@ -90,6 +98,7 @@ class UserServiceTest {
         userInDB.setStatus(EUserStatus.FIRST_LOGIN);
         userInDB.setGender(EGender.FEMALE);
         userInDB.setStaffCode("SD0001");
+        userInDB.setVersion(1L);
 
         adminLocation = new Location();
         adminLocation.setId(1L);
@@ -106,6 +115,25 @@ class UserServiceTest {
         changePasswordRequest = ChangePasswordRequest.builder()
                 .password("Admin@123")
                 .newPassword("Admin@1234")
+                .build();
+
+        userResponse = UserResponse.builder()
+                .id(33L)
+                .staffCode("SD0033")
+                .firstName("duy")
+                .lastName("nguyen hoang")
+                .username("duynh10")
+                .joinDate(LocalDate.of(2024, 7, 8))
+                .dob(LocalDate.of(2001, 10, 15))
+                .gender(EGender.MALE)
+                .status(EUserStatus.ACTIVE)
+                .type(ERole.USER)
+                .location(LocationResponse.builder()
+                        .id(1L)
+                        .name("location")
+                        .code("LCT")
+                        .build())
+                .version(1L)
                 .build();
     }
 
@@ -151,6 +179,7 @@ class UserServiceTest {
             when(userRepository.findByUsername("adminName")).thenReturn(Optional.of(adminUsing));
             when(userRepository.save(any())).thenReturn(userInDB);
             when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
 
             // Run the method
             UserResponse result = userService.createUser(userRequest);
@@ -194,6 +223,7 @@ class UserServiceTest {
                     .thenReturn(resultPage);
 
             when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
 
             // run
             var result = userService.getAllUser(searchDto);
@@ -224,6 +254,7 @@ class UserServiceTest {
             when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
                     .thenReturn(resultPage);
 
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
             when(userRepository.findByUsername("abc.com")).thenReturn(Optional.of(adminUsing));
 
             // run
@@ -244,6 +275,7 @@ class UserServiceTest {
             // set up
             var changePasswordRequest = new FirstChangePasswordRequest("newPassword");
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+            when(authUtil.getCurrentUser()).thenReturn(userInDB);
             when(passwordEncoder.encode("newPassword")).thenReturn("hashedPassword");
             when(userRepository.save(any(User.class))).thenReturn(userInDB);
 
@@ -260,6 +292,7 @@ class UserServiceTest {
             // given
             when(passwordEncoder.matches(any(), any())).thenReturn(true);
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+            when(authUtil.getCurrentUser()).thenReturn(userInDB);
             when(userRepository.save(any(User.class))).thenReturn(userInDB);
 
             // when
@@ -302,6 +335,7 @@ class UserServiceTest {
             userInDB.setLocation(adminLocation);
             when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(adminUsing));
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
             when(assignmentRepository.exists(any(Specification.class))).thenReturn(false);
             when(userRepository.save(userInDB)).thenReturn(userInDB);
             // when
@@ -309,6 +343,40 @@ class UserServiceTest {
             // then
             assertThat(userInDB).hasFieldOrPropertyWithValue("status", EUserStatus.DISABLED);
 
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testEditUser_validRequest_returnUserResponse (){
+            // Given
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setJoinDate(LocalDate.of(2024, 7, 8));
+            request.setDob(LocalDate.of(2000, 10, 10));
+            request.setGender(EGender.MALE);
+            request.setType(ERole.USER);
+            request.setVersion(1L);
+
+            when(userRepository.findByIdAndLocation(1L, adminLocation)).thenReturn(Optional.of(userInDB));
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
+            when(userRepository.save(any())).thenReturn(userInDB);
+            // When
+            UserResponse result = userService.editUser(1L, request);
+            // Then
+            assertThat(result.getVersion()).isEqualTo(userResponse.getVersion());
+        }
+
+        @Test
+        @WithMockUser(username = "test", roles = "ADMIN")
+        void testGetUserById_validRequest_returnUserResponse (){
+            // Given
+            userResponse.setId(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
+
+            // When
+            UserResponse result = userService.getUserById(1L);
+
+            // Then
+            assertThat(result.getId()).isEqualTo(userResponse.getId());
         }
     }
 
@@ -411,23 +479,6 @@ class UserServiceTest {
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAGEABLE);
         }
 
-
-        @Test
-        @WithMockUser(username = "test", roles = "ADMIN")
-        void testFirstChangePassword_whenUserNotFound_shouldThrowAppException () {
-            // set up
-            var changePasswordRequest = new FirstChangePasswordRequest("newPassword");
-            when(userRepository.findByUsername("test")).thenReturn(Optional.empty());
-
-            // run
-            var exception = assertThrows(AppException.class, () -> {
-                userService.firstChangePassword(changePasswordRequest);
-            });
-
-            // verify
-            assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
-        }
-
         @Test
         @WithMockUser(username = "test", roles = "ADMIN")
         void testFirstChangePassword_whenUserStatusNotFirstLogin_shouldThrowAppException () {
@@ -435,6 +486,7 @@ class UserServiceTest {
             var changePasswordRequest = new FirstChangePasswordRequest("newPassword");
             userInDB.setStatus(EUserStatus.ACTIVE);
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+            when(authUtil.getCurrentUser()).thenReturn(userInDB);
 
             // run
             var exception = assertThrows(AppException.class, () -> {
@@ -469,6 +521,8 @@ class UserServiceTest {
             var changePasswordRequest = new ChangePasswordRequest("password", "newPassword");
             when(passwordEncoder.matches(any(), any())).thenReturn(false);
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(userInDB));
+            when(authUtil.getCurrentUser()).thenReturn(userInDB);
+
 
             // run
             var exception = assertThrows(AppException.class, () -> {
@@ -524,6 +578,8 @@ class UserServiceTest {
             userInDB.setLocation(new Location());
             when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(adminUsing));
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
+
             // when
             AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
             // then
@@ -538,6 +594,8 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(userInDB));
             when(userRepository.findByUsername("test")).thenReturn(Optional.of(adminUsing));
             when(assignmentRepository.exists(any(Specification.class))).thenReturn(true);
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
+
             // when
             AppException exception = assertThrows(AppException.class, () -> userService.disableUser(1L));
             // then
@@ -556,6 +614,66 @@ class UserServiceTest {
 
             // assert
             assertThat(exception).hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        void testEditUserVersionMismatch() {
+            UserUpdateRequest userUpdateRequest = new UserUpdateRequest();
+            userUpdateRequest.setVersion(1L);
+            userInDB.setVersion(2L);
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
+            given(userRepository.findByIdAndLocation(1L, adminLocation)).willReturn(Optional.of(userInDB));
+
+            assertThatThrownBy(() -> userService.editUser(1L, userUpdateRequest))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DATA_IS_OLD);
+        }
+
+        @Test
+        void testUpdateUserOptimisticLockingFailure() {
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setJoinDate(LocalDate.of(2024, 7, 8));
+            request.setDob(LocalDate.of(2000, 10, 10));
+            request.setGender(EGender.MALE);
+            request.setType(ERole.USER);
+            request.setVersion(1L);
+
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
+            when(userRepository.findByIdAndLocation(1L, adminLocation)).thenReturn(Optional.of(userInDB));
+            doThrow(new OptimisticLockingFailureException("")).when(userRepository).save(userInDB);
+
+            assertThatThrownBy(() -> userService.editUser(1L, request))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DATA_IS_OLD);
+        }
+
+        @Test
+        void testUpdateUserInvalidJoinDate() {
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setJoinDate(LocalDate.of(2024, 7, 7));
+            request.setDob(LocalDate.of(2000, 10, 10));
+            request.setGender(EGender.MALE);
+            request.setType(ERole.USER);
+            request.setVersion(1L);
+
+            when(authUtil.getCurrentUser()).thenReturn(adminUsing);
+            when(userRepository.findByIdAndLocation(1L, adminLocation)).thenReturn(Optional.of(userInDB));
+            doThrow(new OptimisticLockingFailureException("")).when(userRepository).save(userInDB);
+
+            assertThatThrownBy(() -> userService.editUser(1L, request))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.JOIN_DATE_WEEKEND);
+        }
+
+        @Test
+        void testGetUserInvalidId() {
+            // Given
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> userService.getUserById(1L))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 }

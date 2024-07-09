@@ -38,11 +38,13 @@ public class ReportController {
 
     @GetMapping("/export")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Resource> exportReport () {
+    public ResponseEntity<Resource> exportReport (
+            @RequestParam(defaultValue = "id") String orderBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.xlsx")
                 .contentType(MediaType
                         .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                .body(reportService.exportReport());
+                .body(reportService.exportReport(orderBy, sortDir));
     }
 }

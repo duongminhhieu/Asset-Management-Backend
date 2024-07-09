@@ -75,7 +75,7 @@ public class AssetController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public APIResponse<AssetResponseDto> updateAsset (@PathVariable("id") Long id
-            , @RequestBody AssetUpdateDto assetUpdateDto) {
+            , @RequestBody @Valid AssetUpdateDto assetUpdateDto) {
         return APIResponse.<AssetResponseDto>builder()
                 .result(assetService.updateAsset(id, assetUpdateDto))
                 .build();

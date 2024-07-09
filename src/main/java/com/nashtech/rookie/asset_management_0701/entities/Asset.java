@@ -3,6 +3,8 @@ package com.nashtech.rookie.asset_management_0701.entities;
 import java.time.LocalDate;
 import java.util.Set;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import com.nashtech.rookie.asset_management_0701.enums.EAssetState;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -59,5 +61,6 @@ public class Asset extends AuditEntity<String> {
     private Set<Assignment> assignments;
 
     @Version
+    @ColumnDefault("0")
     private Long version;
 }

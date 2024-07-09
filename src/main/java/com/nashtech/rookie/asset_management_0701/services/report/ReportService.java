@@ -9,5 +9,5 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.ReportResponse;
 public interface ReportService {
     PaginationResponse<ReportResponse> getReport (Integer page, Integer pageSize, String sortBy, String sortDirection);
 
-    Resource exportReport ();
+    Resource exportReport (String sortBy, String sortDirection);
 }

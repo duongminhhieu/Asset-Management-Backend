@@ -1,5 +1,6 @@
 package com.nashtech.rookie.asset_management_0701.controllers;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,6 +19,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswordRequest;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserUpdateRequest;
+import com.nashtech.rookie.asset_management_0701.enums.ERole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -69,11 +73,13 @@ public class UserControllerTest {
                 .build();
 
         userResponse = UserResponse.builder()
+                .id(1L)
                 .firstName("Duy")
                 .lastName("Nguyen Hoang")
                 .dob(LocalDate.of(2001, 10, 15))
                 .gender(EGender.MALE)
                 .joinDate(LocalDate.of(2024, 6, 17))
+                .version(1L)
                 .build();
 
         userListResponse = PaginationResponse.<UserResponse>builder()
@@ -230,6 +236,39 @@ public class UserControllerTest {
             mockMvc.perform(delete("/api/v1/users/1").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Disable user successfully"));
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testUpdateUser_whenValidRequest_shouldReturnOk () throws Exception{
+            // given
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setJoinDate(LocalDate.of(2024, 6, 17));
+            request.setDob(LocalDate.of(2001, 10, 15));
+            request.setGender(EGender.MALE);
+            request.setType(ERole.USER);
+            request.setVersion(1L);
+            when(userService.editUser(any(), any())).thenReturn(userResponse);
+            // when and then
+            mockMvc.perform(put("/api/v1/users/1")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.version", is(1)));
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void testGetUser_whenValidRequest_shouldReturnOk () throws Exception{
+            // given
+            when(userService.getUserById(any())).thenReturn(userResponse);
+            // when and then
+            mockMvc.perform(get("/api/v1/users/1")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.firstName", is(userResponse.getFirstName())));
         }
     }
 

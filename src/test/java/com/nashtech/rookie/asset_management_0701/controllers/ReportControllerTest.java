@@ -3,7 +3,6 @@ package com.nashtech.rookie.asset_management_0701.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.ReportResponse;
-import com.nashtech.rookie.asset_management_0701.dtos.responses.returning_request.ReturningRequestResponseDto;
 import com.nashtech.rookie.asset_management_0701.services.report.ReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,7 +87,7 @@ class ReportControllerTest {
         byte[] mockContent = "Test content".getBytes();
         Resource mockResource = new ByteArrayResource(mockContent);
 
-        when(reportService.exportReport()).thenReturn(mockResource);
+        when(reportService.exportReport(any(), any())).thenReturn(mockResource);
 
         // When Then
         mockMvc.perform(get("/api/v1/reports/export")

@@ -39,8 +39,9 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public Resource exportReport () {
-        Pageable pageable = Pageable.unpaged();
+    public Resource exportReport (String sortBy, String sortDirection) {
+        Sort sort = Sort.by(PageSortUtil.parseSortDirection(sortDirection), sortBy);
+        Pageable pageable = Pageable.unpaged(sort);
         List<ReportResponse> reportList = categoryRepository.getReport(pageable).getContent();
         return new InputStreamResource(reportUtil.writeExcel(reportList));
     }
