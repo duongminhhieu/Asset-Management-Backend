@@ -93,6 +93,7 @@ class AssetServiceImplTest {
 
         category = Category.builder()
                 .name("Laptop")
+                .countAmount(0L)
                 .code("LP").build();
 
         asset = Asset.builder()

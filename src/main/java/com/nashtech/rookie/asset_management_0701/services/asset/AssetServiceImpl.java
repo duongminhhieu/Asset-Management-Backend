@@ -55,8 +55,9 @@ public class AssetServiceImpl implements AssetService {
         asset.setCategory(category);
         asset.setLocation(authUtil.getCurrentUser().getLocation());
 
-        Long count = assetRepository.countByAssetCodeStartingWith(category.getCode()) + 1;
-        asset.setAssetCode(AssetUtil.generateAssetCode(count, category.getCode()));
+        asset.setAssetCode(AssetUtil.generateAssetCode(category.getCountAmount() + 1, category.getCode()));
+        category.setCountAmount(category.getCountAmount() + 1);
+        categoryRepository.save(category);
 
         asset = assetRepository.save(asset);
         return assetMapper.toAssetResponseDto(asset);

@@ -38,4 +38,6 @@ public class Category {
 
     @OneToMany(mappedBy = "category")
     private Set<Asset> assets;
+
+    private Long countAmount;
 }
