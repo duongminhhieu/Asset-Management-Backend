@@ -241,6 +241,54 @@ class AssetServiceImplTest {
             verify(assetRepository, times(1)).save(asset);
         }
 
+        @Test
+        void testUpdateAssetInstallDateValid() {
+            // Given
+            asset.setInstallDate(LocalDate.now().minusMonths(1));
+            assetUpdateDto.setInstallDate(LocalDate.now().minusMonths(2));
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+
+            // When
+            assetService.updateAsset(1L, assetUpdateDto);
+
+            // Then
+            verify(assetMapper, times(1)).updateAsset(asset, assetUpdateDto);
+            verify(assetRepository, times(1)).save(asset);
+        }
+
+        @Test
+        void testUpdateAssetInstallDateLongAgoButValid() {
+            // Given
+            asset.setInstallDate(LocalDate.now().minusMonths(10));
+            assetUpdateDto.setInstallDate(LocalDate.now().minusMonths(2));
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+
+            // When
+            assetService.updateAsset(1L, assetUpdateDto);
+
+            // Then
+            verify(assetMapper, times(1)).updateAsset(asset, assetUpdateDto);
+            verify(assetRepository, times(1)).save(asset);
+        }
+
+        @Test
+        void testUpdateAssetInstallDateLongAgoAndUpdateButValid() {
+            // Given
+            asset.setInstallDate(LocalDate.now().minusMonths(10));
+            assetUpdateDto.setInstallDate(LocalDate.now().minusMonths(5));
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+            given(authUtil.getCurrentUser()).willReturn(user);
+
+            // When
+            assetService.updateAsset(1L, assetUpdateDto);
+
+            // Then
+            verify(assetMapper, times(1)).updateAsset(asset, assetUpdateDto);
+            verify(assetRepository, times(1)).save(asset);
+        }
+
     }
 
     @Nested
@@ -305,7 +353,7 @@ class AssetServiceImplTest {
                     .hasMessageContaining(ErrorCode.ASSET_NOT_FOUND.getMessage());
         }
         @Test
-        void testDeleteAssset_InvalidID_returnException(){
+        void testDeleteAsset_InvalidID_returnException(){
             // Given
             given(assetRepository.findById(1L)).willReturn(Optional.ofNullable(null));
 
@@ -358,6 +406,19 @@ class AssetServiceImplTest {
             assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
                     .isInstanceOf(AppException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_NOT_FOUND);
+        }
+
+        @Test
+        void testUpdateAssetInstallDateInvalid() {
+            // Given
+            asset.setInstallDate(LocalDate.now().minusMonths(1));
+            assetUpdateDto.setInstallDate(LocalDate.now().minusMonths(4));
+            given(assetRepository.findById(1L)).willReturn(Optional.of(asset));
+
+            // When Then
+            assertThatThrownBy(() -> assetService.updateAsset(1L, assetUpdateDto))
+                    .isInstanceOf(AppException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ASSET_INSTALLED_DATE_TOO_OLD);
         }
 
         @Test

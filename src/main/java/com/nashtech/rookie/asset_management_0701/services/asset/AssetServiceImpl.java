@@ -141,7 +141,8 @@ public class AssetServiceImpl implements AssetService {
             throw new AppException(ErrorCode.DATA_IS_OLD);
         }
 
-        validateInstallDate(assetUpdateDto.getInstallDate());
+
+        validateUpdateDate(asset.getInstallDate(), assetUpdateDto.getInstallDate());
         User user = authUtil.getCurrentUser();
 
         if (!asset.getLocation().equals(user.getLocation())) {
@@ -160,5 +161,13 @@ public class AssetServiceImpl implements AssetService {
         }
 
         return assetMapper.toAssetResponseDto(asset);
+    }
+
+    private void validateUpdateDate (LocalDate currInstalledDate, LocalDate installDate) {
+        LocalDate toThreeMonthsAgo = LocalDate.now().minusMonths(3);
+
+        if (installDate.isBefore(toThreeMonthsAgo) && installDate.isBefore(currInstalledDate)) {
+            throw new AppException(ErrorCode.ASSET_INSTALLED_DATE_TOO_OLD);
+        }
     }
 }

@@ -19,6 +19,7 @@ public interface AssetMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "location", ignore = true)
     @Mapping(target = "assignments", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Asset toAsset (AssetCreateDto assetCreateDto);
 
     @Mapping(target = "id", ignore = true)
