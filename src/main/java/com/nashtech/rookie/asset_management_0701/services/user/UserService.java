@@ -4,6 +4,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswo
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserUpdateRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserResponse;
 
@@ -23,4 +24,8 @@ public interface UserService {
     void disableUser (Long id);
 
     Boolean existsCurrentAssignment (Long userId);
+
+    UserResponse getUserById (Long id);
+
+    UserResponse editUser (Long id, UserUpdateRequest userUpdateRequest);
 }

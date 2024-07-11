@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Data
 @Builder
@@ -19,6 +20,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class AssetResponseDto {
     private String id;
 
@@ -36,4 +38,7 @@ public class AssetResponseDto {
     private LocationResponse location;
 
     private String category;
+
+    private Long version;
+
 }

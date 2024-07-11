@@ -29,4 +29,5 @@ public class UserResponse {
     private EUserStatus status;
     private ERole type;
     private LocationResponse location;
+    private Long version;
 }

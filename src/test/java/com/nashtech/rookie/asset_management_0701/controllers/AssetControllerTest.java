@@ -3,6 +3,7 @@ package com.nashtech.rookie.asset_management_0701.controllers;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
@@ -14,7 +15,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.Collections;
 
+import com.nashtech.rookie.asset_management_0701.dtos.requests.asset.AssetUpdateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
+import com.nashtech.rookie.asset_management_0701.entities.Asset;
+import com.nashtech.rookie.asset_management_0701.entities.Location;
+import com.nashtech.rookie.asset_management_0701.entities.User;
+import com.nashtech.rookie.asset_management_0701.exceptions.AppException;
+import com.nashtech.rookie.asset_management_0701.exceptions.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -49,11 +56,16 @@ class AssetControllerTest {
 
     private AssetCreateDto assetCreateDto;
     private AssetResponseDto assetResponseDto;
+    private AssetUpdateDto assetUpdateDto;
     private PaginationResponse<AssetResponseDto> assetPagination;
+    private Asset asset;
+    private User user;
 
     @BeforeEach
     void setUp() {
         LocalDate localDateTime = LocalDate.now();
+        Location location = Location.builder()
+                .name("Location").build();
 
         assetCreateDto = AssetCreateDto.builder()
                 .name("Asset1")
@@ -61,6 +73,14 @@ class AssetControllerTest {
                 .specification("Specification")
                 .installDate(localDateTime)
                 .state(EAssetState.AVAILABLE)
+                .build();
+
+        assetUpdateDto = AssetUpdateDto.builder()
+                .name("Asset1")
+                .specification("Specification")
+                .installDate(localDateTime)
+                .state(EAssetState.AVAILABLE)
+                .version(1L)
                 .build();
 
         assetResponseDto = AssetResponseDto.builder()
@@ -75,6 +95,16 @@ class AssetControllerTest {
         assetPagination = PaginationResponse.<AssetResponseDto>builder()
                 .data(Collections.singletonList(assetResponseDto))
                 .build();
+
+        asset = new Asset();
+        asset.setId(1L);
+        asset.setVersion(1L);
+        asset.setLocation(location);
+        asset.setState(EAssetState.AVAILABLE);
+
+        user = new User();
+        user.setLocation(location);
+
     }
 
     @Nested
@@ -161,8 +191,71 @@ class AssetControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result", is(true)));
         }
+
+        @Test
+        @WithMockUser(roles="ADMIN")
+        void testUpdateAsset_validRequest_returnSuccess() throws Exception {
+            // GIVEN
+            when(assetService.updateAsset(1L, assetUpdateDto)).thenReturn(assetResponseDto);
+
+            // WHEN THEN
+            mockMvc.perform(put("/api/v1/assets/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assetUpdateDto)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.name", is(assetResponseDto.getName())));
+        }
     }
 
     @Nested
-    class UnHappyCase {}
+    class UnHappyCase {
+
+        @Test
+        @WithMockUser(roles="ADMIN")
+        void updateAsset_AssetNotFound() throws Exception {
+            when(assetService.updateAsset(anyLong(), any(AssetUpdateDto.class))).thenThrow(new AppException(ErrorCode.ASSET_NOT_FOUND));
+
+            mockMvc.perform(put("/api/v1/assets/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assetUpdateDto)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(roles="ADMIN")
+        void updateAsset_DataIsOld() throws Exception {
+            assetUpdateDto.setVersion(2L);
+            when(assetService.updateAsset(anyLong(), any(AssetUpdateDto.class))).thenThrow(new AppException(ErrorCode.DATA_IS_OLD));
+
+            mockMvc.perform(put("/api/v1/assets/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assetUpdateDto)))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @WithMockUser(roles="ADMIN")
+        void updateAsset_AssetIsAssigned() throws Exception {
+            asset.setState(EAssetState.ASSIGNED);
+            when(assetService.updateAsset(anyLong(), any(AssetUpdateDto.class))).thenThrow(new AppException(ErrorCode.ASSET_STATE_NOT_AVAILABLE));
+
+            mockMvc.perform(put("/api/v1/assets/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assetUpdateDto)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(roles="ADMIN")
+        void updateAsset_AssetLocationMismatch() throws Exception {
+            Location fakeLocation = Location.builder().name("Location").build();
+            user.setLocation(fakeLocation);
+            when(assetService.updateAsset(anyLong(), any(AssetUpdateDto.class))).thenThrow(new AppException(ErrorCode.ASSET_NOT_FOUND));
+
+            mockMvc.perform(put("/api/v1/assets/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(assetUpdateDto)))
+                    .andExpect(status().isNotFound());
+        }
+    }
 }

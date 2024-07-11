@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nashtech.rookie.asset_management_0701.dtos.filters.AssetFilter;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.asset.AssetCreateDto;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.asset.AssetUpdateDto;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.APIResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.asset.AssetResponseDto;
@@ -67,6 +69,15 @@ public class AssetController {
     public  APIResponse<Boolean> existAssignments (@PathVariable Long id) {
         return APIResponse.<Boolean>builder()
                 .result(assetService.existAssignments(id))
+                .build();
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public APIResponse<AssetResponseDto> updateAsset (@PathVariable("id") Long id
+            , @RequestBody @Valid AssetUpdateDto assetUpdateDto) {
+        return APIResponse.<AssetResponseDto>builder()
+                .result(assetService.updateAsset(id, assetUpdateDto))
                 .build();
     }
 }

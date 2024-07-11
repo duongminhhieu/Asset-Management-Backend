@@ -34,6 +34,7 @@ public class CategoryServiceImpl implements CategoryService {
         });
 
         Category category = categoryMapper.toCategory(categoryCreateDto);
+        category.setCountAmount(0L);
         categoryRepository.save(category);
 
         return categoryMapper.toCategoryResponseDto(category);

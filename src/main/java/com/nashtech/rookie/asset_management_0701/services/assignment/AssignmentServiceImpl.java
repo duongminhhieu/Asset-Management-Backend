@@ -241,6 +241,10 @@ public class AssignmentServiceImpl implements AssignmentService {
                         .and(AssignmentSpecification.assignOnDate(filter.getAssignDate()))
                         .and(AssignmentSpecification.hasLocation(currentLocation))
                         .and(AssignmentSpecification.notStateReturned()))
+                        .and(AssignmentSpecification.joinFetch("returningRequest"))
+                        .and(AssignmentSpecification.joinFetch("asset"))
+                        .and(AssignmentSpecification.joinFetch("assignBy"))
+                        .and(AssignmentSpecification.joinFetch("assignTo"))
                 , pageable);
 
         return PaginationResponse.<AssignmentResponseDto>builder()

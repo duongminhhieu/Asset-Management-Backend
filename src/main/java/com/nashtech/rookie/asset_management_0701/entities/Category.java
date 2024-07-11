@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "categories")
+@Table(name = "categories", indexes = {@Index(name = "idx_category_id", columnList = "id")})
 public class Category {
 
     @Id
@@ -37,4 +38,6 @@ public class Category {
 
     @OneToMany(mappedBy = "category")
     private Set<Asset> assets;
+
+    private Long countAmount;
 }

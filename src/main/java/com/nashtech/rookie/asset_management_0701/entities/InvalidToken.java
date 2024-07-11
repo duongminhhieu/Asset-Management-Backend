@@ -1,9 +1,10 @@
 package com.nashtech.rookie.asset_management_0701.entities;
 
-import java.util.Date;
+import java.time.Instant;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,5 +24,13 @@ public class InvalidToken extends AuditEntity<String> {
     @Id
     private String idToken;
 
-    private Date expiryDate;
+    private Instant expiryDate;
+
+    @ManyToOne
+    private User user;
+
+    @Override
+    public String toString () {
+        return idToken;
+    }
 }

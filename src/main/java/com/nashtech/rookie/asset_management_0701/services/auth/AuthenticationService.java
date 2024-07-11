@@ -6,4 +6,6 @@ import com.nashtech.rookie.asset_management_0701.dtos.responses.auth.Authenticat
 public interface AuthenticationService {
 
     AuthenticationResponse login (AuthenticationRequest request);
+
+    void logout (String token);
 }

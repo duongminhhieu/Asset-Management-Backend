@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import org.springframework.cache.CacheManager;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import com.nashtech.rookie.asset_management_0701.dtos.requests.user.ChangePasswo
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.FirstChangePasswordRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserSearchDto;
+import com.nashtech.rookie.asset_management_0701.dtos.requests.user.UserUpdateRequest;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.PaginationResponse;
 import com.nashtech.rookie.asset_management_0701.dtos.responses.user.UserResponse;
 import com.nashtech.rookie.asset_management_0701.entities.User;
@@ -53,7 +55,7 @@ public class UserServiceImpl implements UserService {
         if (ERole.ADMIN.equals(userRequest.getRole()) && userRequest.getLocationId() == null) {
             throw new AppException(ErrorCode.ADMIN_NULL_LOCATION);
         }
-        validateJoinDate(userRequest);
+        validateJoinDate(userRequest.getDob(), userRequest.getJoinDate());
         DateTimeFormatter newFormatter = DateTimeFormatter.ofPattern("ddMMyyyy");
         String username = userUtil.generateUsername(userRequest);
 
@@ -81,10 +83,7 @@ public class UserServiceImpl implements UserService {
         return userUtil.generateUsernameFromWeb(firstName, lastName);
     }
 
-    private void validateJoinDate (UserRequest userRequest) {
-        LocalDate dob = userRequest.getDob();
-        LocalDate joinDate = userRequest.getJoinDate();
-
+    private void validateJoinDate (LocalDate dob, LocalDate joinDate) {
         if (joinDate.isBefore(dob)) {
             throw new AppException(ErrorCode.JOIN_DATE_BEFORE_DOB);
         }
@@ -202,5 +201,34 @@ public class UserServiceImpl implements UserService {
             AssignmentSpecification.hasAssigneeUsername(assigneeUsername))
             .and(AssignmentSpecification.hasStates(
                 Set.of(EAssignmentState.ACCEPTED, EAssignmentState.WAITING))));
+    }
+
+    @Override
+    public UserResponse getUserById (Long id) {
+        return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(
+                ()-> new AppException(ErrorCode.USER_NOT_FOUND)));
+    }
+
+    @Override
+    @Transactional
+    public UserResponse editUser (Long id, UserUpdateRequest userUpdateRequest) {
+        User existUser = userRepository.findByIdAndLocation(id, authUtil.getCurrentUser().getLocation())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (!existUser.getVersion().equals(userUpdateRequest.getVersion())) {
+            throw new AppException(ErrorCode.DATA_IS_OLD);
+        }
+        validateJoinDate(userUpdateRequest.getDob(), userUpdateRequest.getJoinDate());
+        existUser.setDob(userUpdateRequest.getDob());
+        existUser.setGender(userUpdateRequest.getGender());
+        existUser.setJoinDate(userUpdateRequest.getJoinDate());
+        existUser.setRole(userUpdateRequest.getType());
+        try {
+            userRepository.save(existUser);
+        }
+        catch (OptimisticLockingFailureException e) {
+            throw new AppException(ErrorCode.DATA_IS_OLD);
+        }
+        return userMapper.toUserResponse(existUser);
     }
 }
