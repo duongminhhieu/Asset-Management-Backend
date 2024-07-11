@@ -87,7 +87,9 @@ public final class AssignmentSpecification {
 
     public static Specification<Assignment> joinFetch (String property) {
         return (root, query, criteriaBuilder) -> {
-            root.fetch(property, JoinType.LEFT);
+            if (Long.class != query.getResultType()){
+                root.fetch(property, JoinType.LEFT);
+            }
             return criteriaBuilder.conjunction();
         };
     }
