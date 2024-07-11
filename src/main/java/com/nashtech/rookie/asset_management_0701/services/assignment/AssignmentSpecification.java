@@ -11,6 +11,7 @@ import com.nashtech.rookie.asset_management_0701.entities.Location;
 import com.nashtech.rookie.asset_management_0701.entities.User;
 import com.nashtech.rookie.asset_management_0701.enums.EAssignmentState;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 public final class AssignmentSpecification {
     private AssignmentSpecification (){
     }
@@ -82,5 +83,12 @@ public final class AssignmentSpecification {
     public static Specification<Assignment> assignedDateLessThanEqual (LocalDate assignedDate) {
         return (root, query, criteriaBuilder)
                 -> criteriaBuilder.lessThanOrEqualTo(root.get("assignedDate"), assignedDate);
+    }
+
+    public static Specification<Assignment> joinFetch (String property) {
+        return (root, query, criteriaBuilder) -> {
+            root.fetch(property, JoinType.LEFT);
+            return criteriaBuilder.conjunction();
+        };
     }
 }
