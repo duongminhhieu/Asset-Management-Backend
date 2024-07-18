@@ -36,3 +36,6 @@ application:
     default:
       username: ${ADMIN_DEFAULT_USERNAME}
       password: ${ADMIN_DEFAULT_PASSWORD}
+
+  frontend:
+      url: ${FRONT_END_URL:http://localhost:5173}

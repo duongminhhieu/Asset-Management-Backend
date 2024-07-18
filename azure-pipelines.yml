@@ -5,19 +5,23 @@
 
 trigger:
 - main
+- ci-cd
 pr:
   branches:
     include:
-      - main
+    - main
+    - ci-cd
 
 variables:
   azureSubscription: 'azureSubscription'
-  resouceGroupName: 'rookies7'
-  imageName: 'assset-backend'
-  registryName: 'rookie7reg.azurecr.io'
+  resourceGroupName: 'rookies7'
+  imageName: 'asset-backend'
+  repositoryName: 'assetmanagement'
   appName: 'rookies71'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
+  GCP_PROJECT_ID: 'asset-management-428307'
+  containerRegistry: 'gcr-connection-2'
 
 stages:
 - stage: Build
@@ -38,16 +42,22 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
-      
+
+      - task: Docker@2
+        displayName: Login to Google Artifact Registry
+        inputs:
+          command: login
+          containerRegistry: $(containerRegistry)
+
       - task: Docker@2
         displayName: 'Build and push an image to container registry'
         inputs:
           command: buildAndPush
-          repository: $(registryName)/$(imageName)
+          repository: $(GCP_PROJECT_ID)/$(repositoryName)/$(imageName)
           dockerfile: $(dockerfilePath)
-          containerRegistry: 'RookieReg'
           tags: |
             $(tag)
+            latest
 
 # - stage: Deploy
 #   displayName: Deploy 
