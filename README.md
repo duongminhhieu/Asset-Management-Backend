@@ -48,6 +48,14 @@ Include setup steps for PostgreSQL database connection, and any other necessary 
 ```bash
     ./mvnw spring-boot:run
 ```
+3. Note
+
+   - Password for user is auto generated according to format [username]@[DOB in ddmmyyyy], eg: binhnv@20011993
+   - Test account:
+   ```bash
+       username: hoangd
+       password: Test#1234
+    ```
 # References
 1. [JPA & JWT (Hoang Nguyen)] (https://github.com/hoangnd-dev/rookies-java)
 2. [Springboot Demo (Phu Le)] (https://github.com/phulecse2420/demo)
