@@ -101,10 +101,13 @@ jobs:
     - name: Create Release Tag
       id: create_tag
       uses: actions/github-script@v6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_RUN_NUMBER: ${{ github.run_number }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const tag = 'v' + new Date().toISOString().split('T')[0];
+          const tag = 'v' + new Date().toISOString().split('T')[0] + '-production' + '-' + process.env.GITHUB_RUN_NUMBER;
           await github.rest.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -113,11 +116,11 @@ jobs:
           });
           core.setOutput('tag', tag);
 
-#    - name: Create GitHub Release
-#      id: create_release
-#      uses: actions/create-release@v1
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      with:
-#        tag_name: ${{ steps.create_tag.outputs.tag }}
-#        release_name: Release ${{ steps.create_tag.outputs.tag }}
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.create_tag.outputs.tag }}
+        release_name: Release ${{ steps.create_tag.outputs.tag }}
