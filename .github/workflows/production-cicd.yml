@@ -72,12 +72,13 @@ jobs:
         registry: ghcr.io
         username: ${{github.actor}}
         password: ${{secrets.GITHUB_TOKEN}}
+        
     - name: 'Build Inventory Image'
       run: |
-        docker build . --tag ghcr.io/duongminhhieu/store:latest
-        docker push ghcr.io/duongminhhieu/store:latest
+        docker build . --tag ghcr.io/duongminhhieu/asset-backend:latest
+        docker push ghcr.io/duongminhhieu/asset-backend:latest
       
-    - name: Login to the Container registry
+    - name: Login to the DockerHub Container registry
       uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
@@ -97,3 +98,27 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
+    - name: Create Release Tag
+      id: create_tag
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const tag = 'v' + new Date().toISOString().split('T')[0];
+          await github.rest.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: `refs/tags/${tag}`,
+            sha: context.sha
+          });
+          core.setOutput('tag', tag);
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.create_tag.outputs.tag }}
+        release_name: Release ${{ steps.create_tag.outputs.tag }}
+        body: 'Release created automatically by the CI/CD workflow.'
+        draft: false
+        prerelease: false
+        github_token: ${{ secrets.GITHUB_TOKEN }}
