@@ -114,11 +114,10 @@ jobs:
           core.setOutput('tag', tag);
 
     - name: Create GitHub Release
+      id: create_release
       uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.create_tag.outputs.tag }}
         release_name: Release ${{ steps.create_tag.outputs.tag }}
-        body: 'Release created automatically by the CI/CD workflow.'
-        draft: false
-        prerelease: false
-        github_token: ${{ secrets.GITHUB_TOKEN }}
