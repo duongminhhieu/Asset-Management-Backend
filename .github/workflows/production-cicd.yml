@@ -63,8 +63,18 @@ jobs:
     - name: Add Coverage Job Summary
       run: echo "${{ steps.jacoco_reporter.outputs.coverageSummary }}" >> $GITHUB_STEP_SUMMARY
 
-
-    - name: Log in to the Container registry
+    - name: 'Login to GitHub Container Registry'
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{github.actor}}
+        password: ${{secrets.GITHUB_TOKEN}}
+    - name: 'Build Inventory Image'
+      run: |
+        docker build . --tag ghcr.io/duongminhhieu/store:latest
+        docker push ghcr.io/duongminhhieu/store:latest
+      
+    - name: Login to the Container registry
       uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
